@@ -1,0 +1,22 @@
+// FreeLang v4 - Utility Functions
+
+println("=== UUID Generation ===")
+println("UUID 1:")
+println(uuid())
+println("UUID 2:")
+println(uuid())
+
+println("\n=== Timestamp ===")
+var ts1 = timestamp()
+println("Current timestamp (ms):")
+println(str(ts1))
+
+// Multiple timestamps
+println("\n=== Generating Timestamps ===")
+var t1 = timestamp()
+println("T1:")
+println(str(t1))
+
+var t2 = timestamp()
+println("T2:")
+println(str(t2))

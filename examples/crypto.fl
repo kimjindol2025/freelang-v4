@@ -1,0 +1,25 @@
+// FreeLang v4 - Cryptography Examples
+
+// Hash functions
+var text = "hello world"
+
+println("=== Hash Functions ===")
+println("MD5:")
+println(md5(text))
+println("SHA256:")
+println(sha256(text))
+
+// Base64 encoding/decoding
+println("\n=== Base64 Encoding ===")
+var original = "Hello, FreeLang!"
+var encoded = base64_encode(original)
+println("Encoded:")
+println(encoded)
+
+// HMAC signature
+println("\n=== HMAC Signature ===")
+var message = "important data"
+var secret = "my-secret-key"
+var signature = hmac(message, secret)
+println("Signature:")
+println(signature)

@@ -2,6 +2,7 @@
 // fetch-decode-execute + Actor cooperative scheduling
 
 import { Op, Chunk, FuncInfo } from "./compiler";
+import * as crypto from "crypto";
 
 // ============================================================
 // Value (SPEC_02 Q3)
@@ -675,6 +676,169 @@ export class VM {
           return { tag: "void" };
         }
         return { tag: "void" };
+
+      // ============================================================
+      // Phase 7: 20 Core Libraries
+      // ============================================================
+
+      // Cryptography & Encoding (6)
+      case "md5": {
+        const input = this.valueToString(args[0]);
+        const hash = crypto.createHash("md5").update(input).digest("hex");
+        return { tag: "str", val: hash };
+      }
+      case "sha256": {
+        const input = this.valueToString(args[0]);
+        const hash = crypto.createHash("sha256").update(input).digest("hex");
+        return { tag: "str", val: hash };
+      }
+      case "sha512": {
+        const input = this.valueToString(args[0]);
+        const hash = crypto.createHash("sha512").update(input).digest("hex");
+        return { tag: "str", val: hash };
+      }
+      case "base64_encode": {
+        const input = this.valueToString(args[0]);
+        const encoded = Buffer.from(input, "utf8").toString("base64");
+        return { tag: "str", val: encoded };
+      }
+      case "base64_decode": {
+        try {
+          const input = this.valueToString(args[0]);
+          const decoded = Buffer.from(input, "base64").toString("utf8");
+          return { tag: "ok", val: { tag: "str", val: decoded } };
+        } catch (e) {
+          return { tag: "err", val: { tag: "str", val: "invalid base64" } };
+        }
+      }
+      case "hmac": {
+        const message = this.valueToString(args[0]);
+        const secret = this.valueToString(args[1]);
+        const hmac = crypto.createHmac("sha256", secret).update(message).digest("hex");
+        return { tag: "str", val: hmac };
+      }
+
+      // JSON (4)
+      case "json_parse": {
+        try {
+          const jsonStr = this.valueToString(args[0]);
+          const obj = JSON.parse(jsonStr);
+          const value = this.jsonToValue(obj);
+          return { tag: "ok", val: value };
+        } catch (e) {
+          return { tag: "err", val: { tag: "str", val: `JSON parse error: ${String(e)}` } };
+        }
+      }
+      case "json_stringify": {
+        try {
+          const jsonStr = JSON.stringify(this.valueToJSON(args[0]), null, 0);
+          return { tag: "str", val: jsonStr };
+        } catch (e) {
+          return { tag: "err", val: { tag: "str", val: `JSON stringify error: ${String(e)}` } };
+        }
+      }
+      case "json_validate": {
+        try {
+          const jsonStr = this.valueToString(args[0]);
+          JSON.parse(jsonStr);
+          return { tag: "bool", val: true };
+        } catch {
+          return { tag: "bool", val: false };
+        }
+      }
+      case "json_pretty": {
+        try {
+          const jsonStr = this.valueToString(args[0]);
+          const obj = JSON.parse(jsonStr);
+          const pretty = JSON.stringify(obj, null, 2);
+          return { tag: "str", val: pretty };
+        } catch (e) {
+          return { tag: "err", val: { tag: "str", val: `JSON pretty error: ${String(e)}` } };
+        }
+      }
+
+      // Advanced Strings (3)
+      case "starts_with": {
+        if (args[0].tag === "str" && args[1].tag === "str") {
+          const result = args[0].val.startsWith(args[1].val);
+          return { tag: "bool", val: result };
+        }
+        return { tag: "bool", val: false };
+      }
+      case "ends_with": {
+        if (args[0].tag === "str" && args[1].tag === "str") {
+          const result = args[0].val.endsWith(args[1].val);
+          return { tag: "bool", val: result };
+        }
+        return { tag: "bool", val: false };
+      }
+      case "replace": {
+        if (args[0].tag === "str" && args[1].tag === "str" && args[2].tag === "str") {
+          const result = args[0].val.replaceAll(args[1].val, args[2].val);
+          return { tag: "str", val: result };
+        }
+        return args[0];
+      }
+
+      // Advanced Arrays (3)
+      case "reverse": {
+        if (args[0].tag === "arr") {
+          const reversed = [...args[0].val].reverse();
+          return { tag: "arr", val: reversed };
+        }
+        return args[0];
+      }
+      case "sort": {
+        if (args[0].tag === "arr") {
+          const sorted = [...args[0].val].sort((a, b) => {
+            const aVal = (a as any).val ?? 0;
+            const bVal = (b as any).val ?? 0;
+            return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+          });
+          return { tag: "arr", val: sorted };
+        }
+        return args[0];
+      }
+      case "unique": {
+        if (args[0].tag === "arr") {
+          const seen = new Set<string>();
+          const unique: Value[] = [];
+          for (const item of args[0].val) {
+            const key = JSON.stringify(this.valueToJSON(item));
+            if (!seen.has(key)) {
+              seen.add(key);
+              unique.push(item);
+            }
+          }
+          return { tag: "arr", val: unique };
+        }
+        return args[0];
+      }
+
+      // Math (2)
+      case "gcd": {
+        const a = Math.abs((args[0] as any).val);
+        const b = Math.abs((args[1] as any).val);
+        const gcd = (x: number, y: number): number => (y === 0 ? x : gcd(y, x % y));
+        return { tag: "i32", val: gcd(a, b) };
+      }
+      case "lcm": {
+        const a = Math.abs((args[0] as any).val);
+        const b = Math.abs((args[1] as any).val);
+        const gcd = (x: number, y: number): number => (y === 0 ? x : gcd(y, x % y));
+        return { tag: "i32", val: (a * b) / gcd(a, b) };
+      }
+
+      // Utils (2)
+      case "uuid": {
+        const uuid = crypto.randomUUID();
+        return { tag: "str", val: uuid };
+      }
+      case "timestamp": {
+        const now = Date.now();
+        return { tag: "f64", val: now };
+      }
+
       default:
         throw new Error(`panic: unknown builtin '${name}'`);
     }
@@ -738,6 +902,58 @@ export class VM {
       case "err": return { tag: "err", val: this.deepClone(v.val) };
       case "some": return { tag: "some", val: this.deepClone(v.val) };
       default: return v; // Copy 타입은 그대로
+    }
+  }
+
+  // ============================================================
+  // JSON Conversion (Phase 7)
+  // ============================================================
+
+  private jsonToValue(obj: any): Value {
+    if (obj === null) return { tag: "none" };
+    if (typeof obj === "boolean") return { tag: "bool", val: obj };
+    if (typeof obj === "number") return { tag: "i32", val: Math.floor(obj) };
+    if (typeof obj === "string") return { tag: "str", val: obj };
+    if (Array.isArray(obj)) {
+      return { tag: "arr", val: obj.map((v) => this.jsonToValue(v)) };
+    }
+    if (typeof obj === "object") {
+      const fields = new Map<string, Value>();
+      for (const [k, v] of Object.entries(obj)) {
+        fields.set(k, this.jsonToValue(v));
+      }
+      return { tag: "struct", fields };
+    }
+    return { tag: "void" };
+  }
+
+  private valueToJSON(v: Value): any {
+    switch (v.tag) {
+      case "i32":
+      case "f64":
+        return v.val;
+      case "bool":
+        return v.val;
+      case "str":
+        return v.val;
+      case "arr":
+        return v.val.map((item) => this.valueToJSON(item));
+      case "struct":
+        const obj: any = {};
+        for (const [k, val] of v.fields.entries()) {
+          obj[k] = this.valueToJSON(val);
+        }
+        return obj;
+      case "ok":
+        return this.valueToJSON(v.val);
+      case "err":
+        return { error: this.valueToJSON(v.val) };
+      case "some":
+        return this.valueToJSON(v.val);
+      case "none":
+        return null;
+      default:
+        return null;
     }
   }
 }

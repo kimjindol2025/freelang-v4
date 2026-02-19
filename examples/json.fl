@@ -1,0 +1,23 @@
+// FreeLang v4 - JSON Processing Examples
+
+println("=== JSON Processing ===")
+
+// JSON validation
+var json1 = "{\"name\":\"FreeLang\",\"version\":4}"
+var json2 = "{invalid json"
+
+println("Valid JSON:")
+println(str(json_validate(json1)))
+println("Invalid JSON:")
+println(str(json_validate(json2)))
+
+// JSON pretty printing
+println("\n=== JSON Pretty Print ===")
+var prettyJson = json_pretty(json1)
+println(prettyJson)
+
+// Parse and stringify
+println("\n=== Parse & Stringify ===")
+var result = json_parse(json1)
+println("Parsed:")
+println(typeof(result))

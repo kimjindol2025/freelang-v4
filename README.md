@@ -53,7 +53,7 @@ println(str(sum(nums)))
 | 동시성 | Actor + Channel (cooperative scheduling) |
 | 에러 | Result\<T,E\> + ? 연산자, panic = Actor만 죽임 |
 | 루프 | for...in only (무한 루프 방지) |
-| 내장 함수 | ~30개 (println, str, range, length, push, pop, abs, min, max, pow, sqrt 등) |
+| 내장 함수 | 50개 (I/O, 암호화, JSON, 문자열, 배열, 수학, 유틸리티) |
 
 ## 구현 현황
 
@@ -72,17 +72,18 @@ println(str(sum(nums)))
 | 9 | SPEC_09 Control Flow | for...in, Result + ? |
 | 10 | SPEC_10 Modularity | v4 = 핵, v5 = 살 |
 
-### 2부: 구현 (6 Phases 완료)
+### 2부: 구현 (7 Phases 완료)
 
-| Phase | 파일 | LOC | Tests |
-|-------|------|-----|-------|
-| 1. Lexer | `lexer.ts` | 452 | 37 |
-| 2. Parser/AST | `ast.ts` + `parser.ts` | 784 | 116 |
-| 3. TypeChecker | `checker.ts` | 881 | 46 |
-| 4. Compiler | `compiler.ts` | 780 | 54 |
-| 5. VM | `vm.ts` | 743 | 62 |
-| 6. CLI | `main.ts` | 92 | - |
-| **합계** | | **5,764** | **315** |
+| Phase | 파일 | LOC | Tests | 설명 |
+|-------|------|-----|-------|------|
+| 1. Lexer | `lexer.ts` | 452 | 37 | Tokenization (50 tokens) |
+| 2. Parser/AST | `ast.ts` + `parser.ts` | 784 | 116 | RD + Pratt Parser |
+| 3. TypeChecker | `checker.ts` | 881 | 46 | Type System (Move/Copy) |
+| 4. Compiler | `compiler.ts` | 785 | 54 | AST → Bytecode (45 ops) |
+| 5. VM | `vm.ts` | 1,050 | 62 | Stack VM + Actor scheduling |
+| 6. CLI | `main.ts` | 92 | - | CLI Entry Point |
+| 7. Core Libraries | `vm.ts` | +570 | +19 | 20 stdlib functions |
+| **합계** | | **6,934** | **334** | Phase 7: 50개 내장 함수 |
 
 ## 프로젝트 구조
 
@@ -120,7 +121,42 @@ npx ts-node src/compiler.test.ts
 npx ts-node src/vm.test.ts
 ```
 
-315 assertions, 0 failures.
+334 assertions, 0 failures.
+
+## 50개 내장 함수 (Phase 7)
+
+### I/O (3개)
+`println`, `print`, `read_line`
+
+### 파일 (2개)
+`read_file`, `write_file`
+
+### 타입 변환 (4개)
+`str`, `i32`, `i64`, `f64`
+
+### 배열 (8개)
+`push`, `pop`, `length`, `slice`, `clone`, `reverse`, `sort`, `unique`
+
+### 문자열 (9개)
+`length`, `contains`, `split`, `trim`, `to_upper`, `to_lower`, `char_at`, `starts_with`, `ends_with`, `replace`
+
+### 암호화 & 인코딩 (6개)
+`md5`, `sha256`, `sha512`, `base64_encode`, `base64_decode`, `hmac`
+
+### JSON (4개)
+`json_parse`, `json_stringify`, `json_validate`, `json_pretty`
+
+### 수학 (5개)
+`abs`, `min`, `max`, `pow`, `sqrt`, `gcd`, `lcm`
+
+### 유틸리티 (4개)
+`range`, `uuid`, `timestamp`, `typeof`
+
+### 에러 & 동시성 (2개)
+`assert`, `panic`
+
+### 채널 (2개)
+`channel`, `recv`, `send`
 
 ## v4의 한계 (의도적)
 
@@ -130,7 +166,14 @@ npx ts-node src/vm.test.ts
 
 ```
 명세:  9,136 LOC (18개 문서)
-코드:  5,764 LOC (11개 파일)
-예제:     24 LOC (3개 .fl)
-합계: 14,924 LOC
+코드:  6,934 LOC (11개 파일 + Phase 7)
+예제:    200 LOC (9개 .fl 파일)
+테스트:  334개 assertions
+합계: 16,204 LOC + 334 tests
+
+Phase 7 추가:
+- 20개 내장 함수 (Crypto, JSON, 문자열, 배열, 수학, 유틸리티)
+- 50개 총 내장 함수
+- 19개 새로운 테스트
+- 6개 예제 파일
 ```

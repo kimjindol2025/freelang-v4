@@ -330,6 +330,57 @@ expectOutput(`for i in range(1, 16) {
 ], "FizzBuzz 1-15");
 
 // ============================================================
+// Phase 7: 20 Core Libraries Tests
+// ============================================================
+
+console.log("\n## Phase 7: Core Libraries (20 functions)");
+
+// Cryptography & Encoding (6)
+expectOutput(`println(md5("hello"))`, ["5d41402abc4b2a76b9719d911017c592"], "md5 hash");
+expectOutput(`println(sha256("hello"))`, ["2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"], "sha256 hash");
+expectOutput(`var encoded = base64_encode("hello")
+println(encoded)`, ["aGVsbG8="], "base64 encode");
+expectOutput(`var result = base64_decode("aGVsbG8=")
+println(typeof(result))`, ["ok"], "base64 decode ok");
+
+// JSON (4)
+expectOutput(`var result = json_parse("{\\\"x\\\":1}")
+println(typeof(result))`, ["ok"], "json_parse ok");
+expectOutput(`println(json_validate("{\\\"x\\\":1}"))`, ["true"], "json_validate true");
+expectOutput(`println(json_validate("{invalid"))`, ["false"], "json_validate false");
+
+// Advanced Strings (3)
+expectOutput(`println(starts_with("hello", "he"))`, ["true"], "starts_with true");
+expectOutput(`println(starts_with("hello", "lo"))`, ["false"], "starts_with false");
+expectOutput(`println(ends_with("hello", "lo"))`, ["true"], "ends_with true");
+expectOutput(`println(ends_with("hello", "he"))`, ["false"], "ends_with false");
+expectOutput(`println(replace("hello world", "world", "FreeLang"))`, ["hello FreeLang"], "replace string");
+
+// Advanced Arrays (3)
+expectOutput(`var arr = [1, 2, 3]
+var rev = reverse(arr)
+println(length(rev))`, ["3"], "reverse array length");
+expectOutput(`var arr = [3, 1, 2]
+var sorted = sort(arr)
+for x in sorted {
+  println(str(x))
+}`, ["1", "2", "3"], "sort array");
+expectOutput(`var arr = [1, 2, 2, 3, 3, 3]
+var uniq = unique(arr)
+println(length(uniq))`, ["3"], "unique array");
+
+// Math (2)
+expectOutput(`println(gcd(12, 8))`, ["4"], "gcd function");
+expectOutput(`println(lcm(12, 8))`, ["24"], "lcm function");
+
+// Utils (2)
+expectOutput(`var id = uuid()
+println(length(id))`, ["36"], "uuid length 36");
+expectOutput(`var ts = timestamp()
+fn check(t: f64): bool { return t > 0.0 }
+println(check(ts))`, ["true"], "timestamp positive");
+
+// ============================================================
 // 결과
 // ============================================================
 

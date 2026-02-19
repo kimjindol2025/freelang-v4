@@ -1,0 +1,30 @@
+// FreeLang v4 - Advanced Array Operations
+
+println("=== Array Operations ===")
+
+// Original array
+var numbers = [5, 2, 8, 1, 9, 3]
+
+// Reverse
+var reversed = reverse(numbers)
+println("Original length:")
+println(length(numbers))
+println("Reversed length:")
+println(length(reversed))
+
+// Sort
+println("\n=== Sorting ===")
+var sorted = sort(numbers)
+println("Sorted first element:")
+for x in sorted {
+  println(str(x))
+}
+
+// Unique
+println("\n=== Remove Duplicates ===")
+var withDups = [1, 2, 2, 3, 3, 3, 4]
+var unique = unique(withDups)
+println("With duplicates count:")
+println(length(withDups))
+println("Unique count:")
+println(length(unique))

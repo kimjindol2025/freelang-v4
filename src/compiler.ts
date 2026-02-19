@@ -601,6 +601,19 @@ export class Compiler {
         "char_at", "contains", "split", "trim", "to_upper", "to_lower",
         "abs", "min", "max", "pow", "sqrt",
         "range", "channel", "panic", "typeof", "assert",
+        // Phase 7: 20 Core Libraries
+        // Cryptography & Encoding (6)
+        "md5", "sha256", "sha512", "base64_encode", "base64_decode", "hmac",
+        // JSON (4)
+        "json_parse", "json_stringify", "json_validate", "json_pretty",
+        // Advanced Strings (3)
+        "starts_with", "ends_with", "replace",
+        // Advanced Arrays (3)
+        "reverse", "sort", "unique",
+        // Math (2)
+        "gcd", "lcm",
+        // Utils (2)
+        "uuid", "timestamp",
       ];
 
       if (builtins.includes(name)) {

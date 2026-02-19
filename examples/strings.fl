@@ -1,0 +1,29 @@
+// FreeLang v4 - Advanced String Operations
+
+println("=== String Operations ===")
+
+var greeting = "Hello, FreeLang!"
+
+// String checks
+println("Starts with 'Hello':")
+println(str(starts_with(greeting, "Hello")))
+println("Ends with 'Lang!':")
+println(str(ends_with(greeting, "Lang!")))
+println("Starts with 'Hi':")
+println(str(starts_with(greeting, "Hi")))
+
+// String replacement
+println("\n=== String Replacement ===")
+var original = "The cat sat on the cat"
+var replaced = replace(original, "cat", "dog")
+println("Original:")
+println(original)
+println("Replaced:")
+println(replaced)
+
+// Case conversion
+println("\n=== Case Conversion ===")
+println("Upper:")
+println(to_upper("freelang v4"))
+println("Lower:")
+println(to_lower("FREELANG V4"))

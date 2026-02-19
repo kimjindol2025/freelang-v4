@@ -1,0 +1,23 @@
+// FreeLang v4 - Advanced Math Functions
+
+println("=== Greatest Common Divisor (GCD) ===")
+println("GCD(48, 18):")
+println(str(gcd(48, 18)))
+println("GCD(100, 50):")
+println(str(gcd(100, 50)))
+
+println("\n=== Least Common Multiple (LCM) ===")
+println("LCM(4, 6):")
+println(str(lcm(4, 6)))
+println("LCM(12, 18):")
+println(str(lcm(12, 18)))
+
+println("\n=== Combined Usage ===")
+var a = 24
+var b = 36
+var g = gcd(a, b)
+var l = lcm(a, b)
+println("GCD:")
+println(str(g))
+println("LCM:")
+println(str(l))
