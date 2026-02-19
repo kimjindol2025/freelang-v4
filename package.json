@@ -1,0 +1,16 @@
+{
+  "name": "freelang-v4",
+  "version": "4.0.0",
+  "description": "FreeLang v4 - Database Implementation",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "node -r ts-node/register src/**/*.test.ts"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "ts-node": "^10.0.0",
+    "@types/node": "^20.0.0"
+  }
+}
