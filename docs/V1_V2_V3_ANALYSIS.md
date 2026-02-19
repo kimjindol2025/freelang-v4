@@ -93,3 +93,10 @@ v2: "v1 교훈으로 더 잘 하자" → v1보다 더 비대해짐
 v3: "이번엔 작게 하자" → 그래도 Phase 9까지 확장
 v4: "설계 먼저. 6 Phase. 끝." → 5,764 LOC에 334 tests 0 failures
 ```
+
+## v5 참고 자료
+
+- **AST Patterns**: https://gogs.dclub.kr/kim/ast-patterns.git
+  - 8가지 AST 구현 패턴 (Classic Tree, Tagged Union, Flat, Arena, Immutable, Green-Red Tree 등)
+  - v4는 #2 Tagged Union 사용 중
+  - v5 성능 최적화 시 #4 Flat AST 또는 #5 Arena AST 검토
