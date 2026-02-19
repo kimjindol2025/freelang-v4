@@ -1,0 +1,142 @@
+// Phase 3: Higher-Order Functions Tests (v4 compatible)
+// Note: v4 doesn't support first-class functions
+// Simulating HOF behavior with explicit loops
+
+// Simulate MAP: transform each element
+fn test_map(): void {
+  println("=== MAP Simulation ===")
+  var result: i32 = 0
+  // Map: [1,2,3,4,5] * 2 => [2,4,6,8,10]
+  for i in range(1, 6) {
+    result = i * 2  // transformation
+  }
+  println(str(result))  // Last transformed: 10
+}
+
+// Simulate FILTER: select elements matching condition
+fn test_filter(): void {
+  println("=== FILTER Simulation ===")
+  var count: i32 = 0
+  var sum: i32 = 0
+  // Filter: [1,2,3,4,5,6,7,8,9,10] where x > 5
+  for i in range(1, 11) {
+    if i > 5 {
+      count = count + 1
+      sum = sum + i  // accumulate filtered items
+    }
+  }
+  println(str(count))  // Expected: 5 (6,7,8,9,10)
+  println(str(sum))    // Expected: 40 (6+7+8+9+10)
+}
+
+// Simulate REDUCE: accumulate to single value
+fn test_reduce(): void {
+  println("=== REDUCE Simulation ===")
+  var accumulator: i32 = 0
+  // Reduce: [1,2,3,4,5] with sum
+  for i in range(1, 6) {
+    accumulator = accumulator + i
+  }
+  println(str(accumulator))  // Expected: 15
+}
+
+// Simulate REDUCE with multiplication
+fn test_reduce_mult(): void {
+  println("=== REDUCE Multiplication ===")
+  var product: i32 = 1
+  for i in range(1, 6) {
+    product = product * i
+  }
+  println(str(product))  // Expected: 120
+}
+
+// Simulate FIND: first element matching condition
+fn test_find(): void {
+  println("=== FIND Simulation ===")
+  var found: i32 = -1
+  for i in range(1, 11) {
+    if i > 5 && found == -1 {
+      found = i
+    }
+  }
+  println(str(found))  // Expected: 6
+}
+
+// Simulate SOME: check if any element matches
+fn test_some(): void {
+  println("=== SOME Simulation ===")
+  var exists: i32 = 0
+  for i in range(1, 11) {
+    if i == 7 {
+      exists = 1
+    }
+  }
+  println(str(exists))  // Expected: 1 (true)
+}
+
+// Simulate EVERY: check if all elements match
+fn test_every(): void {
+  println("=== EVERY Simulation ===")
+  var all_positive: i32 = 1
+  for i in range(-5, 6) {
+    if i <= 0 {
+      all_positive = 0
+    }
+  }
+  println(str(all_positive))  // Expected: 0 (false, -5..-1 are not positive)
+}
+
+// Simulate FOREACH: perform action for each element
+fn test_foreach(): void {
+  println("=== FOREACH Simulation ===")
+  var printed: i32 = 0
+  for i in range(1, 6) {
+    printed = i  // "action": assign value
+  }
+  println(str(printed))  // Expected: 5 (last value)
+}
+
+// Combine MAP + FILTER
+fn test_map_filter(): void {
+  println("=== MAP + FILTER Combination ===")
+  var count: i32 = 0
+  var sum: i32 = 0
+  // [1,2,3,4,5] * 2 => [2,4,6,8,10]
+  // Filter > 5 => [6,8,10]
+  for i in range(1, 6) {
+    var doubled: i32 = i * 2
+    if doubled > 5 {
+      count = count + 1
+      sum = sum + doubled
+    }
+  }
+  println(str(count))  // Expected: 4 (6,8,10)
+  println(str(sum))    // Expected: 24 (6+8+10)
+}
+
+// Combine FILTER + REDUCE
+fn test_filter_reduce(): void {
+  println("=== FILTER + REDUCE Combination ===")
+  var sum_evens: i32 = 0
+  // Filter evens [2,4,6,8,10] and sum
+  for i in range(1, 11) {
+    if i % 2 == 0 {
+      sum_evens = sum_evens + i
+    }
+  }
+  println(str(sum_evens))  // Expected: 30 (2+4+6+8+10)
+}
+
+// Main execution
+println("=== Phase 3: HOF Tests (v4 - Simulated) ===")
+test_map()
+test_filter()
+test_reduce()
+test_reduce_mult()
+test_find()
+test_some()
+test_every()
+test_foreach()
+test_map_filter()
+test_filter_reduce()
+println("=== All HOF tests completed ===")

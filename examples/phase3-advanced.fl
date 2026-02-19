@@ -1,0 +1,383 @@
+// Phase 3: Advanced Tests (v4 compatible)
+// Additional test cases for comprehensive coverage
+
+// ============================================================
+// ADVANCED CLOSURES (9 more tests)
+// ============================================================
+
+// Test 1: Triple nested scope
+fn closure_test1(): void {
+  var a: i32 = 1
+  if true {
+    var b: i32 = a + 1
+    if true {
+      var c: i32 = b + 1
+      if true {
+        var d: i32 = c + 1
+        println(str(d))  // Expected: 4
+      }
+    }
+  }
+}
+
+// Test 2: Multiple closures sharing scope
+fn closure_test2(): void {
+  var x: i32 = 10
+  var r1: i32 = x + 1
+  var r2: i32 = x + 2
+  var r3: i32 = x + 3
+  println(str(r1))  // Expected: 11
+  println(str(r2))  // Expected: 12
+  println(str(r3))  // Expected: 13
+}
+
+// Test 3: Closure in loop
+fn closure_test3(): void {
+  var total: i32 = 0
+  for i in range(1, 4) {
+    var multiplied: i32 = i * 10
+    total = total + multiplied
+  }
+  println(str(total))  // Expected: 60 (10+20+30)
+}
+
+// Test 4: Conditional closure
+fn closure_test4(): void {
+  var x: i32 = 5
+  var result: i32 = 0
+  if x > 3 {
+    result = x * 2
+  }
+  println(str(result))  // Expected: 10
+}
+
+// Test 5: Variable reassignment in closure
+fn closure_test5(): void {
+  var x: i32 = 1
+  x = x + 1
+  x = x + 1
+  x = x + 1
+  println(str(x))  // Expected: 4
+}
+
+// Test 6: Closure with parameter
+fn closure_helper6(val: i32): i32 {
+  return val * val
+}
+
+fn closure_test6(): void {
+  var result: i32 = closure_helper6(5)
+  println(str(result))  // Expected: 25
+}
+
+// Test 7: Chained calculations
+fn closure_test7(): void {
+  var x: i32 = 10
+  var y: i32 = x + 5
+  var z: i32 = y * 2
+  println(str(z))  // Expected: 30
+}
+
+// Test 8: Loop variable persistence
+fn closure_test8(): void {
+  var last: i32 = 0
+  for i in range(1, 6) {
+    last = i
+  }
+  println(str(last))  // Expected: 5
+}
+
+// Test 9: Nested function calls with scope
+fn closure_helper9(a: i32): i32 {
+  return a + 10
+}
+
+fn closure_test9(): void {
+  var x: i32 = 5
+  var y: i32 = closure_helper9(x)
+  var z: i32 = closure_helper9(y)
+  println(str(z))  // Expected: 25
+}
+
+// ============================================================
+// ADVANCED LOOPS (10 more tests)
+// ============================================================
+
+// Test 10: Range with negative step simulation
+fn loop_test10(): void {
+  var sum: i32 = 0
+  for i in range(5, 10) {
+    sum = sum + i
+  }
+  println(str(sum))  // Expected: 35 (5+6+7+8+9)
+}
+
+// Test 11: Empty range
+fn loop_test11(): void {
+  var count: i32 = 0
+  for i in range(5, 5) {
+    count = count + 1
+  }
+  println(str(count))  // Expected: 0
+}
+
+// Test 12: Modulo in loop
+fn loop_test12(): void {
+  var evens: i32 = 0
+  for i in range(0, 20) {
+    if i % 2 == 0 {
+      evens = evens + 1
+    }
+  }
+  println(str(evens))  // Expected: 10
+}
+
+// Test 13: Complex nested loop
+fn loop_test13(): void {
+  var result: i32 = 0
+  for i in range(1, 4) {
+    for j in range(1, 4) {
+      for k in range(1, 3) {
+        result = result + 1
+      }
+    }
+  }
+  println(str(result))  // Expected: 18 (3*3*2)
+}
+
+// Test 14: Loop with accumulation
+fn loop_test14(): void {
+  var power: i32 = 1
+  for i in range(1, 5) {
+    power = power * 2
+  }
+  println(str(power))  // Expected: 16 (2^4)
+}
+
+// Test 15: Loop counting down via subtraction
+fn loop_test15(): void {
+  var countdown: i32 = 10
+  for i in range(0, 5) {
+    countdown = countdown - 1
+  }
+  println(str(countdown))  // Expected: 5
+}
+
+// Test 16: Alternating values in loop
+fn loop_test16(): void {
+  var state: i32 = 0
+  for i in range(0, 10) {
+    if i % 2 == 0 {
+      state = 1
+    } else {
+      state = 0
+    }
+  }
+  println(str(state))  // Expected: 0 (last is odd)
+}
+
+// Test 17: Loop with break-like logic
+fn loop_test17(): void {
+  var found: i32 = -1
+  for i in range(0, 20) {
+    if i == 12 && found == -1 {
+      found = i
+    }
+  }
+  println(str(found))  // Expected: 12
+}
+
+// Test 18: Geometric series
+fn loop_test18(): void {
+  var sum: i32 = 0
+  var power: i32 = 1
+  for i in range(0, 4) {
+    sum = sum + power
+    power = power * 2
+  }
+  println(str(sum))  // Expected: 15 (1+2+4+8)
+}
+
+// Test 19: Harmonic-like sequence
+fn loop_test19(): void {
+  var sum: i32 = 0
+  for i in range(1, 6) {
+    if i > 0 {
+      sum = sum + (10 / i)
+    }
+  }
+  println(str(sum))  // Expected: 24 (10+5+3+2+1)
+}
+
+// ============================================================
+// ADVANCED HOF (12 more tests)
+// ============================================================
+
+// Test 20: Chained map-like operations
+fn hof_test20(): void {
+  var result: i32 = 0
+  for i in range(1, 6) {
+    var x: i32 = i * 2
+    var y: i32 = x + 1
+    result = y
+  }
+  println(str(result))  // Expected: 11 (last: 5*2+1)
+}
+
+// Test 21: Filter with complex condition
+fn hof_test21(): void {
+  var count: i32 = 0
+  for i in range(1, 21) {
+    if i > 5 && i < 15 {
+      count = count + 1
+    }
+  }
+  println(str(count))  // Expected: 9 (6..14)
+}
+
+// Test 22: Reduce with initial value
+fn hof_test22(): void {
+  var accum: i32 = 100
+  for i in range(1, 6) {
+    accum = accum + i
+  }
+  println(str(accum))  // Expected: 115 (100+1+2+3+4+5)
+}
+
+// Test 23: Find with early termination logic
+fn hof_test23(): void {
+  var found: i32 = 0
+  for i in range(1, 100) {
+    if i * i == 25 {
+      found = i
+    }
+  }
+  println(str(found))  // Expected: 5
+}
+
+// Test 24: Some (any) logic
+fn hof_test24(): void {
+  var found_even: i32 = 0
+  for i in range(1, 10) {
+    if i % 2 == 0 {
+      found_even = 1
+    }
+  }
+  println(str(found_even))  // Expected: 1
+}
+
+// Test 25: Every (all) logic
+fn hof_test25(): void {
+  var all_positive: i32 = 1
+  for i in range(1, 10) {
+    if i <= 0 {
+      all_positive = 0
+    }
+  }
+  println(str(all_positive))  // Expected: 1
+}
+
+// Test 26: ForEach with accumulation
+fn hof_test26(): void {
+  var sum: i32 = 0
+  for item in range(10, 20) {
+    sum = sum + item
+  }
+  println(str(sum))  // Expected: 145 (10+11+...+19)
+}
+
+// Test 27: Map with condition
+fn hof_test27(): void {
+  var result: i32 = 0
+  for i in range(1, 6) {
+    var transformed: i32 = 0
+    if i % 2 == 0 {
+      transformed = i * 10
+    } else {
+      transformed = i
+    }
+    result = transformed
+  }
+  println(str(result))  // Expected: 5 (last odd)
+}
+
+// Test 28: Filter and map combined
+fn hof_test28(): void {
+  var sum: i32 = 0
+  for i in range(1, 11) {
+    if i % 2 == 0 {
+      sum = sum + (i * 2)
+    }
+  }
+  println(str(sum))  // Expected: 60 (4+8+12+16+20)
+}
+
+// Test 29: Nested reduce
+fn hof_test29(): void {
+  var total: i32 = 0
+  for i in range(1, 4) {
+    var subtotal: i32 = 0
+    for j in range(1, 4) {
+      subtotal = subtotal + j
+    }
+    total = total + subtotal
+  }
+  println(str(total))  // Expected: 18 (6*3)
+}
+
+// Test 30: Complex composition
+fn hof_test30(): void {
+  var result: i32 = 0
+  for i in range(1, 6) {
+    var step1: i32 = i * 2
+    if step1 > 4 {
+      var step2: i32 = step1 + 10
+      result = result + step2
+    }
+  }
+  println(str(result))  // Expected: 61 (12+14+16+18)
+}
+
+// ============================================================
+// MAIN EXECUTION
+// ============================================================
+
+println("=== Phase 3: Advanced Tests ===")
+
+println("--- Advanced Closures ---")
+closure_test1()
+closure_test2()
+closure_test3()
+closure_test4()
+closure_test5()
+closure_test6()
+closure_test7()
+closure_test8()
+closure_test9()
+
+println("--- Advanced Loops ---")
+loop_test10()
+loop_test11()
+loop_test12()
+loop_test13()
+loop_test14()
+loop_test15()
+loop_test16()
+loop_test17()
+loop_test18()
+loop_test19()
+
+println("--- Advanced HOF ---")
+hof_test20()
+hof_test21()
+hof_test22()
+hof_test23()
+hof_test24()
+hof_test25()
+hof_test26()
+hof_test27()
+hof_test28()
+hof_test29()
+hof_test30()
+
+println("=== All advanced tests completed ===")

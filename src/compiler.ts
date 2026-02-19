@@ -614,6 +614,8 @@ export class Compiler {
         "gcd", "lcm",
         // Utils (2)
         "uuid", "timestamp",
+        // Channel (2)
+        "send", "recv",
       ];
 
       if (builtins.includes(name)) {
