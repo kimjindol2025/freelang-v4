@@ -595,7 +595,7 @@ export class Compiler {
     if (expr.callee.kind === "ident") {
       const name = expr.callee.name;
       const builtins = [
-        "println", "read_line", "read_file", "write_file",
+        "println", "print", "read_line", "read_file", "write_file",
         "i32", "i64", "f64", "str",
         "push", "pop", "slice", "clone", "length",
         "char_at", "contains", "split", "trim", "to_upper", "to_lower",

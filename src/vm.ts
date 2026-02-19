@@ -552,6 +552,16 @@ export class VM {
         this.output.push(text);
         return { tag: "void" };
       }
+      case "print": {
+        const text = args.map((a) => this.valueToString(a)).join(" ");
+        // print는 줄바꿈 없이 마지막 출력에 이어붙임
+        if (this.output.length > 0) {
+          this.output[this.output.length - 1] += text;
+        } else {
+          this.output.push(text);
+        }
+        return { tag: "void" };
+      }
       case "str":
         return { tag: "str", val: this.valueToString(args[0]) };
       case "length":
