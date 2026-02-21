@@ -1,14 +1,15 @@
 {
   "name": "freelang-cli",
   "version": "4.0.0",
-  "description": "FreeLang v4 - AI-First Programming Language (334/334 tests passing)",
+  "description": "FreeLang v4 - AI-First Programming Language Compiler (297 tests passing)",
   "main": "dist/main.js",
   "bin": {
     "freelang": "dist/main.js"
   },
   "scripts": {
     "build": "tsc",
-    "test": "node -r ts-node/register src/**/*.test.ts",
+    "test": "node test-runner.js",
+    "test:watch": "tsc --watch & npm test",
     "prepublish": "npm run build"
   },
   "repository": {
