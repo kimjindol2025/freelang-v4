@@ -442,7 +442,19 @@ export class Parser {
     const fields: { name: string; value: Expr }[] = [];
     if (!this.check(TokenType.RBRACE)) {
       do {
-        const name = this.expectIdent("field name");
+        // 필드 이름: IDENT 또는 STRING_LIT 모두 허용
+        let name: string;
+        const fieldTok = this.peek();
+        if (fieldTok.type === TokenType.IDENT) {
+          this.advance();
+          name = fieldTok.lexeme;
+        } else if (fieldTok.type === TokenType.STRING_LIT) {
+          this.advance();
+          name = fieldTok.lexeme; // lexeme은 이미 언인용된 값
+        } else {
+          this.error(`expected field name (IDENT or STRING_LIT), got ${fieldTok.type}: "${fieldTok.lexeme}"`, fieldTok);
+          throw new Error("expected field name");
+        }
         this.expect(TokenType.COLON, "expected ':' after field name");
         const value = this.parseExpr(0);
         fields.push({ name, value });
