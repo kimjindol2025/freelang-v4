@@ -162,6 +162,12 @@ export class Lexer {
       return;
     }
 
+    // # 주석 (FreeLang 고유)
+    if (ch === "#") {
+      this.skipHashComment();
+      return;
+    }
+
     // 주석 또는 SLASH (SPEC_04 Q8)
     if (ch === "/") {
       if (this.peekNext() === "/") {
@@ -403,6 +409,15 @@ export class Lexer {
   private skipLineComment(): void {
     this.advance(); // 첫 번째 '/'
     this.advance(); // 두 번째 '/'
+    while (!this.isAtEnd() && this.peek() !== "\n") {
+      this.advance();
+    }
+    // '\n'은 소비하지 않음 — scanToken에서 줄 번호 처리
+  }
+
+  // # 주석 스캔 (FreeLang)
+  private skipHashComment(): void {
+    this.advance(); // '#' 소비
     while (!this.isAtEnd() && this.peek() !== "\n") {
       this.advance();
     }
