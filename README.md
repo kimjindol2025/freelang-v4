@@ -1,226 +1,268 @@
-# FreeLang v4
+# 🌍 FreeLang: 완전한 언어 (Complete Language Initiative)
 
-**Language-Independent Programming Language Definition**
+**목표**: 모든 프로젝트를 **FreeLang으로 통합**하여 **완전한 독립 언어 생태계 구축**
 
-> "추상적 언어 설계로, 다양한 런타임(C, Go, Rust, Zig 등)에서 동일한 동작을 보장한다."
-
-**Status**: ✅ Phase 8.4 완료 (Language-Independent SPEC 정의 완료)
-
----
-
-## 🎯 개요
-
-**FreeLang v4**는:
-- **일급 함수, 구조체, while/for...of, 패턴 매칭**을 지원하는 **정적 타입 언어**
-- **null 없음, 묵시적 변환 없음, use-after-move 컴파일 에러**
-- **특정 런타임에 종속되지 않는 추상 명세(Language-Independent Definition)**로 정의
-
-```
-source.fl → Lexer → Parser → TypeChecker → [Compiler → VM (구현 선택)]
-```
+**상태**: 🚀 **진행 중** (Stage 1/7 시작)
+**기간**: 9주 (1개월 코어 완성, 2개월 마이그레이션)
+**최종 목표**: 2026년 4월 30일까지 모든 프로젝트 FreeLang화 완료
 
 ---
 
-## 🚀 빠른 시작
+## 📋 목차
 
-```bash
-# TypeScript 참조 구현
-npm run build
-npm test
+1. [비전 & 전략](#-비전--전략)
+2. [7단계 로드맵](#-7단계-로드맵-3개월)
+3. [아키텍처](#-아키텍처)
+4. [구현 가이드](#-구현-가이드)
+5. [마이그레이션 계획](#-마이그레이션-계획)
+6. [성공 기준](#-성공-기준)
 
-# 예제 실행
-npx ts-node src/main.ts examples/hello.fl
+---
+
+## 🎯 비전 & 전략
+
+### 문제: 언어 파편화
+
+**현황**:
+```
+┌─────────────────────────────────────────┐
+│ 프로젝트별 언어 혼용                      │
+├─────────────────────────────────────────┤
+│ TypeScript: v2-freelang-ai, freelang-v6 │
+│ JavaScript: kim-agent                   │
+│ Python: various utilities               │
+│ C: c-server, c-vm                       │
+│ Go: (미사용)                             │
+│ Rust: (미사용)                          │
+└─────────────────────────────────────────┘
+        ↓
+   언어 번역 필요 (TypeScript → Python)
+   타입 시스템 불일치
+   Async 패턴 차이
+   테스트 자동화 어려움
+```
+
+### 해결책: FreeLang 통합
+
+```
+┌──────────────────────────────────────────────────┐
+│                 FreeLang (모든 계층)              │
+├──────────────────────────────────────────────────┤
+│  Core/StdLib: async, http, json, db, fs, etc    │
+│  Infrastructure: HTTP Server, DB Driver          │
+│  Application: API, GraphQL, CLI, Realtime        │
+│  Tests: Unit, Integration, VM, ISA               │
+└──────────────────────────────────────────────────┘
+        ↓
+   FreeLang Compiler
+        ↓
+   ISA v1.0 바이트코드
+        ↓
+   C VM (단일 런타임)
+```
+
+### 이점
+
+| 항목 | 이전 | 이후 |
+|------|------|------|
+| **개발 언어** | 5개 (TS, JS, Python, C, etc) | 1개 (FreeLang) |
+| **타입 시스템** | 불일치 | 동일 (SPEC_06) |
+| **Async 패턴** | 언어마다 다름 | 통일 (async/await) |
+| **테스트** | 수동 | 자동 (모두 FreeLang) |
+| **코드 생성** | 복잡 | 자동화 가능 |
+| **배포 복잡도** | 높음 (언어별 런타임) | 낮음 (단일 VM) |
+
+---
+
+## 📊 7단계 로드맵 (3개월)
+
+### Stage 1: 기초 완성 (1주)
+- ✅ Compiler (ISA Generator)
+- ✅ StdLib Phase 1 (async, error, types)
+- ✅ 첫 프로그램 실행
+
+### Stage 2: 필수 StdLib (2주)
+- ✅ I/O, Network, Data 모듈
+- ✅ v2-freelang-ai 호환성 확보
+
+### Stage 3: Database & Cache (1주)
+- ✅ SQL, SQLite, PostgreSQL
+- ✅ Redis, Transaction
+
+### Stage 4: 첫 번째 마이그레이션 (1주)
+- ✅ freelang-http-server → FreeLang
+- ✅ 성공 검증
+
+### Stage 5: 중형 프로젝트 (2주)
+- ✅ kim-agent, Proof_ai 마이그레이션
+
+### Stage 6: 대형 프로젝트 (2주)
+- ✅ v2-freelang-ai, freelang-v6 마이그레이션
+
+### Stage 7: 통합 & 최적화 (1주)
+- ✅ 완전한 언어 생태계 구축
+
+---
+
+## 🏗️ 아키텍처
+
+```
+┌─────────────────────────────────────────────────┐
+│              FreeLang 전체 스택                  │
+├─────────────────────────────────────────────────┤
+│                                                  │
+│  ┌──────────────────────────────────────────┐  │
+│  │         Application Layer                │  │
+│  │  (API, GraphQL, CLI, WebSocket, etc)     │  │
+│  └──────────────────────────────────────────┘  │
+│                    ↓                            │
+│  ┌──────────────────────────────────────────┐  │
+│  │    Infrastructure Layer                  │  │
+│  │  (HTTP Server, DB Driver, Cache, Stream)│  │
+│  └──────────────────────────────────────────┘  │
+│                    ↓                            │
+│  ┌──────────────────────────────────────────┐  │
+│  │    Core/StdLib Layer                     │  │
+│  │  (async, error, types, json, fs, etc)    │  │
+│  └──────────────────────────────────────────┘  │
+│                    ↓                            │
+│  ┌──────────────────────────────────────────┐  │
+│  │    Type System & Semantics               │  │
+│  │  (SPEC_04~13: 형식 명세)                 │  │
+│  └──────────────────────────────────────────┘  │
+│                    ↓                            │
+│  ┌──────────────────────────────────────────┐  │
+│  │    FreeLang Compiler                     │  │
+│  │  (Lexer → Parser → TypeChecker → ISAGen) │  │
+│  └──────────────────────────────────────────┘  │
+│                    ↓                            │
+│  ┌──────────────────────────────────────────┐  │
+│  │    ISA v1.0 (Instruction Set)            │  │
+│  │  (22개 명령어: ADD, CALL, JMP, etc)      │  │
+│  └──────────────────────────────────────────┘  │
+│                    ↓                            │
+│  ┌──────────────────────────────────────────┐  │
+│  │    C VM (단일 런타임)                    │  │
+│  │  (main_extended.c + 확장)                │  │
+│  └──────────────────────────────────────────┘  │
+│                    ↓                            │
+│  ┌──────────────────────────────────────────┐  │
+│  │    Machine Code / Native Execution       │  │
+│  └──────────────────────────────────────────┘  │
+│                                                  │
+└─────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 💡 코드 예시
-
-### Struct (Phase 8.1)
-```freelang
-struct Point { x: f64, y: f64 }
-var p = Point { x: 1.0, y: 2.0 }
-var dist = sqrt(p.x * p.x + p.y * p.y)
-```
-
-### 일급 함수 & 고차 함수 (Phase 8.2)
-```freelang
-var add: fn(i32, i32) -> i32 = fn(a, b) -> i32 { a + b }
-var multiply: fn(i32, i32) -> i32 = fn(a, b) -> i32 { a * b }
-
-fn apply(f: fn(i32, i32) -> i32, x: i32, y: i32) -> i32 {
-  return f(x, y)
-}
-
-var result = apply(add, 3, 4)  // 7
-```
-
-### While & for...of (Phase 8.3, 8.4)
-```freelang
-var i = 0
-while i < 5 {
-  println(str(i))
-  i = i + 1
-}
-
-for x of [1, 2, 3, 4, 5] {
-  println(str(x * 2))
-}
-
-for ch of "hello" {
-  println(ch)
-}
-```
-
----
-
-## ✨ 핵심 기능
-
-| 기능 | 내용 | Phase |
-|------|------|-------|
-| **타입 시스템** | i32, i64, f64, bool, string, [T], struct, fn, Option\<T\>, Result\<T,E\> | 1-6 |
-| **메모리 관리** | Scope Drop + Move semantics (GC 없음) | 7 |
-| **구조체** | 필드 정의, 인스턴스 생성, 필드 접근 | **8.1** ✅ |
-| **일급 함수** | 함수 리터럴, 고차 함수, 클로저 | **8.2** ✅ |
-| **루프 & 제어** | while, for...in, for...of, break, continue | **8.3-8.4** ✅ |
-| **패턴 매칭** | match + 7종 패턴 (예정) | 8.5 |
-| **에러 처리** | Result\<T,E\> + ? 연산자, panic | 8.6 |
-| **동시성** | Actor + Channel (계획) | Phase 9 |
-
-## 📊 구현 현황
-
-### 1부: 형식 명세 (SPEC) - ✅ 완료
-
-| SPEC | 제목 | 내용 | 상태 |
-|------|------|------|------|
-| SPEC_04-08 | 기본 명세 | Lexer, Parser, Type, Memory, Scope | ✅ Stable |
-| **SPEC_09** | **Struct System** | **복합 자료형 (Phase 8.1)** | **✅ Stable** |
-| **SPEC_10** | **First-Class Functions** | **함수 리터럴, 고차 함수, 클로저 (Phase 8.2)** | **✅ Stable** |
-| **SPEC_11** | **Control Flow** | **while, for...of, break, continue (Phase 8.3-8.4)** | **✅ Stable** |
-
-**특징**: Language-Independent Definition (다양한 런타임 구현 가능)
-
-### 2부: TypeScript 참조 구현 (8 Phases 완료)
-
-| Phase | 기능 | 파일 | LOC | Tests | 상태 |
-|-------|------|------|-----|-------|------|
-| 1-3 | 기본 (Lexer, Parser, TypeChecker) | 3개 | ~2,100 | ~200 | ✅ |
-| 4-7 | Compiler, VM, Stdlib | 4개 | ~4,000 | ~130 | ✅ |
-| **8.1** | **Struct System** | `ast.ts`, `parser.ts`, `checker.ts` | +80 | **25/25** ✅ |
-| **8.2** | **First-Class Functions** | 동일 파일들 | +120 | **25/25** ✅ |
-| **8.3** | **While Loops** | 동일 파일들 | +60 | **18/18** ✅ |
-| **8.4** | **for...of Loops** | 동일 파일들 | +70 | **20/20** ✅ |
-| **합계** | | | **~6,400** | **~423** | ✅ 100% |
-
-## 📁 프로젝트 구조
+## 📁 파일 구조
 
 ```
-freelang-v4/
-├── SPEC/                           # Language-Independent SPEC 문서
-│   ├── README.md                   # SPEC 체계 및 학습 가이드
-│   ├── SPEC_09_STRUCT_SYSTEM.md    # 구조체 (Phase 8.1)
-│   ├── SPEC_10_FIRST_CLASS_FUNCTIONS.md  # 일급 함수 (Phase 8.2)
-│   └── SPEC_11_CONTROL_FLOW.md     # 루프 제어 (Phase 8.3-8.4)
-├── src/
-│   ├── lexer.ts                    # 토큰화 (50 토큰, 18 키워드)
-│   ├── ast.ts                      # AST 노드 정의
-│   ├── parser.ts                   # RD + Pratt 파서 (Struct, Functions, Loops)
-│   ├── checker.ts                  # 타입 체커 (Move/Copy + Struct/Functions)
-│   ├── compiler.ts                 # AST → 바이트코드 (45 opcodes)
-│   ├── vm.ts                       # Stack VM + stdlib (50 내장 함수)
-│   ├── main.ts                     # CLI 진입점
-│   ├── for-of.test.ts              # for...of 테스트 (20/20 ✅)
-│   └── [struct.test.ts, function-literal.test.ts, while-loop.test.ts, ...]
-├── examples/
-│   ├── hello.fl
-│   ├── factorial.fl
-│   └── fizzbuzz.fl
-├── dist/                           # 컴파일된 JavaScript
-├── tsconfig.json
-├── package.json
-└── README.md
+FreeLang-Complete-Language/
+├── README.md (이 파일)
+├── ROADMAP.md (상세 로드맵)
+├── ARCHITECTURE.md (아키텍처 설계)
+├── IMPLEMENTATION_GUIDE.md (구현 가이드)
+├── MIGRATION_PLAN.md (마이그레이션 계획)
+│
+├── phases/
+│   ├── phase-1-compiler.md
+│   ├── phase-2-stdlib.md
+│   ├── phase-3-database.md
+│   ├── phase-4-first-migration.md
+│   ├── phase-5-medium-projects.md
+│   ├── phase-6-large-projects.md
+│   └── phase-7-integration.md
+│
+├── specs/
+│   ├── SPEC_04_LEXER.md
+│   ├── SPEC_05_PARSER.md
+│   ├── SPEC_06_TYPE_SYSTEM.md
+│   ├── SPEC_07_MOVE_SEMANTICS.md
+│   ├── SPEC_08_SCOPE.md
+│   ├── SPEC_09_STRUCT_SYSTEM.md
+│   ├── SPEC_10_FIRST_CLASS_FUNCTIONS.md
+│   ├── SPEC_11_CONTROL_FLOW.md
+│   ├── SPEC_12_PATTERN_MATCHING.md
+│   ├── SPEC_13_ERROR_HANDLING.md
+│   └── ISA_v1_0.md
+│
+├── stdlib/
+│   ├── async.free
+│   ├── error.free
+│   ├── types.free
+│   ├── http.free
+│   ├── fs.free
+│   ├── json.free
+│   ├── stream.free
+│   ├── sql.free
+│   ├── sqlite.free
+│   ├── postgres.free
+│   └── index.free
+│
+├── compiler/
+│   ├── isa-generator.ts
+│   ├── isa-optimizer.ts
+│   ├── isa-validator.ts
+│   └── vm-runner.ts
+│
+└── examples/
+    ├── hello-world.free
+    ├── async-demo.free
+    ├── http-server.free
+    └── api-example.free
 ```
 
 ---
 
-## ✅ 테스트 현황
+## 🚀 구현 가이드
 
-```bash
-npm run build          # TypeScript → JavaScript 컴파일
-npm test              # 전체 테스트 실행
-```
+상세 가이드는 다음 문서를 참조:
 
-### 테스트 통계
-
-| Phase | 테스트 파일 | 통과 | 실패 | 상태 |
-|-------|----------|------|------|------|
-| 1-3 | lexer, parser, checker | ~200 | 0 | ✅ |
-| 4-7 | compiler, vm | ~130 | 0 | ✅ |
-| **8.1** | **struct.test.ts** | **25/25** | **0** | **✅** |
-| **8.2** | **function-literal.test.ts** | **25/25** | **0** | **✅** |
-| **8.3** | **while-loop.test.ts** | **18/18** | **0** | **✅** |
-| **8.4** | **for-of.test.ts** | **20/20** | **0** | **✅** |
-| **합계** | | **~423/423** | **0** | **✅ 100%** |
+- [IMPLEMENTATION_GUIDE.md](./IMPLEMENTATION_GUIDE.md) - 구현 단계별 상세 가이드
+- [phases/phase-1-compiler.md](./phases/phase-1-compiler.md) - Stage 1 구현 상세
 
 ---
 
-## 🔍 Language-Independent SPEC의 의미
+## 📌 마이그레이션 계획
 
-### 1. 추상 명세 (Abstract Specification)
+마이그레이션 대상 및 우선순위:
 
-FreeLang v4는 **TypeScript 구현과 독립적으로** BNF, 의미론, 타입 규칙으로 정의됨.
+1. **freelang-http-server** (4단계) - 가장 간단
+2. **kim-agent** (5단계) - 중간 복잡도
+3. **Proof_ai** (5단계) - API 로직
+4. **v2-freelang-ai** (6단계) - 가장 복잡
+5. **freelang-v6** (6단계) - 언어 코어
 
-```
-SPEC (언어 독립)
-  ├─→ TypeScript 구현 (참조 구현)
-  ├─→ C 구현 (가능)
-  ├─→ Go 구현 (가능)
-  └─→ Rust 구현 (가능)
-
-결과: 모든 구현에서 동일한 언어 동작 보장
-```
-
-### 2. 형식 명세 (Formal Specification)
-
-각 SPEC은 다음을 포함:
-- **BNF/EBNF**: 문법 정의
-- **의미론**: 실행 알고리즘
-- **타입 규칙**: 자연 추론(Natural Deduction)
-- **제약**: 오류 조건 및 유효성
-
-### 3. 다중 구현 가능 (Implementation Agnostic)
-
-언어 설계자가 아닌 **다른 개발자도** SPEC을 읽고 자신의 언어로 구현 가능.
+상세 계획은 [MIGRATION_PLAN.md](./MIGRATION_PLAN.md) 참조
 
 ---
 
-## 📈 구현 로드맵
+## ✅ 성공 기준
 
-### ✅ 완료 (Phase 8.4)
-- [x] Struct System
-- [x] First-Class Functions
-- [x] While & for...of Loops
-- [x] Language-Independent SPEC
-
-### 🔄 진행 중
-- [ ] Pattern Matching (SPEC_12, Phase 8.5)
-- [ ] Error Handling (SPEC_13, Phase 8.6)
-
-### 🚀 계획
-- [ ] Standard Library Definition (SPEC_14)
-- [ ] ISA v1.0 (Instruction Set Architecture)
-- [ ] C 구현 (기존 c-server 기반)
-- [ ] 성능 최적화 (레지스터 할당, JIT)
-- [ ] 표준 라이브러리 (파일 I/O, 네트워킹, 암호화)
+| 마일스톤 | 완료 기한 | 상태 |
+|---------|----------|------|
+| **Stage 1: Compiler + Basic StdLib** | 1주 후 | 🔄 진행 중 |
+| **Stage 2: 필수 StdLib** | 3주 후 | ⏳ 예정 |
+| **Stage 3: Database & Cache** | 4주 후 | ⏳ 예정 |
+| **Stage 4: 첫 마이그레이션** | 5주 후 | ⏳ 예정 |
+| **Stage 5-6: 전체 마이그레이션** | 8주 후 | ⏳ 예정 |
+| **Stage 7: 완전 통합** | 9주 후 | ⏳ 예정 |
 
 ---
 
-## 📊 총 규모
+## 📞 문의 & 피드백
 
-```
-SPEC 문서: ~3,000 LOC (형식 명세)
-TypeScript: ~6,400 LOC (참조 구현)
-테스트:     ~423 assertions (100% 통과)
+각 Phase별 구현 가이드 및 상세 스펙은 별도 파일에서 확인 가능합니다.
 
-총합:      ~9,400 LOC + 423 tests
-```
+**Repository Structure**:
+- `phases/` - 각 단계별 상세 가이드
+- `specs/` - 형식 명세 (SPEC_04 ~ ISA_v1_0)
+- `stdlib/` - 표준 라이브러리 예제
+- `compiler/` - 컴파일러 구현 가이드
+- `examples/` - 샘플 코드
+
+---
+
+**Last Updated**: 2026-03-03
+**Status**: 🚀 Initiative Launched
