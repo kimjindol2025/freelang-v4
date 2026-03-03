@@ -220,12 +220,25 @@ export class Parser {
   private parseForStmt(): Stmt {
     const kw = this.advance(); // for
     const variable = this.expectIdent("loop variable");
-    this.expect(TokenType.IN, "expected 'in' after loop variable");
-    const iterable = this.parseExpr(0);
-    this.expect(TokenType.LBRACE, "expected '{' after for...in");
-    const body = this.parseBlock();
 
-    return { kind: "for_stmt", variable, iterable, body, line: kw.line, col: kw.col };
+    // for...in or for...of
+    const loopType = this.peek().type;
+    if (loopType === TokenType.IN) {
+      this.advance(); // in
+      const iterable = this.parseExpr(0);
+      this.expect(TokenType.LBRACE, "expected '{' after for...in");
+      const body = this.parseBlock();
+      return { kind: "for_stmt", variable, iterable, body, line: kw.line, col: kw.col };
+    } else if (loopType === TokenType.OF) {
+      this.advance(); // of
+      const iterable = this.parseExpr(0);
+      this.expect(TokenType.LBRACE, "expected '{' after for...of");
+      const body = this.parseBlock();
+      return { kind: "for_of_stmt", variable, iterable, body, line: kw.line, col: kw.col };
+    } else {
+      this.error("expected 'in' or 'of' after loop variable", this.peek());
+      return { kind: "for_stmt", variable, iterable: { kind: "ident", name: "", line: kw.line, col: kw.col }, body: [], line: kw.line, col: kw.col };
+    }
   }
 
   // while 문

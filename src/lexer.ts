@@ -6,7 +6,7 @@
 // ============================================================
 
 export enum TokenType {
-  // 키워드 (17)
+  // 키워드 (18)
   VAR = "VAR",
   LET = "LET",
   CONST = "CONST",
@@ -17,6 +17,7 @@ export enum TokenType {
   MATCH = "MATCH",
   FOR = "FOR",
   IN = "IN",
+  OF = "OF",
   WHILE = "WHILE",
   BREAK = "BREAK",
   CONTINUE = "CONTINUE",
@@ -111,6 +112,7 @@ const KEYWORDS: Map<string, TokenType> = new Map([
   ["match", TokenType.MATCH],
   ["for", TokenType.FOR],
   ["in", TokenType.IN],
+  ["of", TokenType.OF],
   ["while", TokenType.WHILE],
   ["break", TokenType.BREAK],
   ["continue", TokenType.CONTINUE],

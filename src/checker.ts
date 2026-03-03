@@ -273,6 +273,8 @@ export class TypeChecker {
         return this.checkMatchStmt(stmt);
       case "for_stmt":
         return this.checkForStmt(stmt);
+      case "for_of_stmt":
+        return this.checkForOfStmt(stmt);
       case "while_stmt":
         return this.checkWhileStmt(stmt);
       case "break_stmt":
@@ -452,6 +454,37 @@ export class TypeChecker {
       elemType = iterType.element;
     } else if (iterType.kind !== "unknown") {
       this.error(`for...in requires array, got ${typeToString(iterType)}`, stmt.line, stmt.col);
+    }
+
+    // 루프 스코프
+    const prevScope = this.scope;
+    this.scope = new Scope(prevScope);
+
+    // 루프 변수 (immutable — SPEC_08 Q6)
+    this.scope.define(stmt.variable, {
+      type: elemType,
+      mutable: false,
+      moved: false,
+      line: stmt.line,
+      col: stmt.col,
+    });
+
+    for (const s of stmt.body) this.checkStmt(s);
+    this.scope = prevScope;
+  }
+
+  private checkForOfStmt(stmt: Stmt & { kind: "for_of_stmt" }): void {
+    const iterType = this.checkExpr(stmt.iterable);
+
+    // iterable은 array 또는 string이어야 함
+    let elemType: Type = { kind: "unknown" };
+    if (iterType.kind === "array") {
+      elemType = iterType.element;
+    } else if (iterType.kind === "string") {
+      // 문자열을 순회하면 각 요소는 string (한 글자)
+      elemType = { kind: "string" };
+    } else if (iterType.kind !== "unknown") {
+      this.error(`for...of requires array or string, got ${typeToString(iterType)}`, stmt.line, stmt.col);
     }
 
     // 루프 스코프
