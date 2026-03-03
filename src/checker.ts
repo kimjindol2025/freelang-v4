@@ -273,6 +273,12 @@ export class TypeChecker {
         return this.checkMatchStmt(stmt);
       case "for_stmt":
         return this.checkForStmt(stmt);
+      case "while_stmt":
+        return this.checkWhileStmt(stmt);
+      case "break_stmt":
+        return this.checkBreakStmt(stmt);
+      case "continue_stmt":
+        return this.checkContinueStmt(stmt);
       case "spawn_stmt":
         return this.checkSpawnStmt(stmt);
       case "return_stmt":
@@ -463,6 +469,32 @@ export class TypeChecker {
 
     for (const s of stmt.body) this.checkStmt(s);
     this.scope = prevScope;
+  }
+
+  private checkWhileStmt(stmt: Stmt & { kind: "while_stmt" }): void {
+    const condType = this.checkExpr(stmt.condition);
+
+    // while 조건은 bool이어야 함
+    if (condType.kind !== "bool" && condType.kind !== "unknown") {
+      this.error(`while condition must be bool, got ${typeToString(condType)}`, stmt.line, stmt.col);
+    }
+
+    // 루프 스코프
+    const prevScope = this.scope;
+    this.scope = new Scope(prevScope);
+
+    for (const s of stmt.body) this.checkStmt(s);
+    this.scope = prevScope;
+  }
+
+  private checkBreakStmt(stmt: Stmt & { kind: "break_stmt" }): void {
+    // break는 루프 내에서만 사용 가능 (현재는 미지원)
+    // 나중에 구현할 수 있음
+  }
+
+  private checkContinueStmt(stmt: Stmt & { kind: "continue_stmt" }): void {
+    // continue는 루프 내에서만 사용 가능 (현재는 미지원)
+    // 나중에 구현할 수 있음
   }
 
   private checkSpawnStmt(stmt: Stmt & { kind: "spawn_stmt" }): void {

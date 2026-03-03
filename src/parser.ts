@@ -48,7 +48,6 @@ function infixBP(type: TokenType): number {
     case TokenType.PERCENT: return BP_MULTIPLICATIVE;
     case TokenType.LPAREN:
     case TokenType.LBRACKET:
-    case TokenType.LBRACE:
     case TokenType.DOT:
     case TokenType.QUESTION: return BP_POSTFIX;
     default: return 0;
@@ -103,6 +102,12 @@ export class Parser {
         return this.parseMatchStmt();
       case TokenType.FOR:
         return this.parseForStmt();
+      case TokenType.WHILE:
+        return this.parseWhileStmt();
+      case TokenType.BREAK:
+        return this.parseBreakStmt();
+      case TokenType.CONTINUE:
+        return this.parseContinueStmt();
       case TokenType.SPAWN:
         return this.parseSpawnStmt();
       case TokenType.RETURN:
@@ -223,6 +228,30 @@ export class Parser {
     return { kind: "for_stmt", variable, iterable, body, line: kw.line, col: kw.col };
   }
 
+  // while 문
+  private parseWhileStmt(): Stmt {
+    const kw = this.advance(); // while
+    const condition = this.parseExpr(0);
+    this.expect(TokenType.LBRACE, "expected '{' after while condition");
+    const body = this.parseBlock();
+
+    return { kind: "while_stmt", condition, body, line: kw.line, col: kw.col };
+  }
+
+  // break 문
+  private parseBreakStmt(): Stmt {
+    const kw = this.advance(); // break
+    this.match(TokenType.SEMICOLON); // optional semicolon
+    return { kind: "break_stmt", line: kw.line, col: kw.col };
+  }
+
+  // continue 문
+  private parseContinueStmt(): Stmt {
+    const kw = this.advance(); // continue
+    this.match(TokenType.SEMICOLON); // optional semicolon
+    return { kind: "continue_stmt", line: kw.line, col: kw.col };
+  }
+
   // spawn 문
   private parseSpawnStmt(): Stmt {
     const kw = this.advance(); // spawn
@@ -294,6 +323,24 @@ export class Parser {
 
     while (!this.isAtEnd()) {
       const tok = this.peek();
+
+      // 구조체 리터럴: ident { field: value, ... }
+      if (tok.type === TokenType.LBRACE && left.kind === "ident") {
+        this.advance(); // {
+        const fields: { name: string; value: Expr }[] = [];
+        if (!this.check(TokenType.RBRACE)) {
+          do {
+            const name = this.expectIdent("field name");
+            this.expect(TokenType.COLON, "expected ':' after field name");
+            const value = this.parseExpr(0);
+            fields.push({ name, value });
+          } while (this.match(TokenType.COMMA));
+        }
+        this.expect(TokenType.RBRACE, "expected '}'");
+        left = { kind: "struct_lit", structName: left.name, fields, line: left.line, col: left.col };
+        continue;
+      }
+
       const bp = infixBP(tok.type);
       if (bp <= minBP) break;
 
@@ -428,22 +475,6 @@ export class Parser {
       this.advance();
       const field = this.expectIdent("field name");
       return { kind: "field_access", object: left, field, line: tok.line, col: tok.col };
-    }
-
-    // 구조체 리터럴: ident { field: value, ... }
-    if (tok.type === TokenType.LBRACE && left.kind === "ident") {
-      this.advance(); // {
-      const fields: { name: string; value: Expr }[] = [];
-      if (!this.check(TokenType.RBRACE)) {
-        do {
-          const name = this.expectIdent("field name");
-          this.expect(TokenType.COLON, "expected ':' after field name");
-          const value = this.parseExpr(0);
-          fields.push({ name, value });
-        } while (this.match(TokenType.COMMA));
-      }
-      this.expect(TokenType.RBRACE, "expected '}'");
-      return { kind: "struct_lit", structName: left.name, fields, line: left.line, col: left.col };
     }
 
     // try 연산자: expr?
@@ -776,8 +807,9 @@ export class Parser {
   private isStmtStart(): boolean {
     const t = this.peek().type;
     return t === TokenType.VAR || t === TokenType.LET || t === TokenType.CONST ||
-           t === TokenType.FN || t === TokenType.IF || t === TokenType.MATCH ||
-           t === TokenType.FOR || t === TokenType.SPAWN || t === TokenType.RETURN;
+           t === TokenType.FN || t === TokenType.STRUCT || t === TokenType.IF || t === TokenType.MATCH ||
+           t === TokenType.FOR || t === TokenType.WHILE || t === TokenType.BREAK || t === TokenType.CONTINUE ||
+           t === TokenType.SPAWN || t === TokenType.RETURN;
   }
 
   private error(message: string, tok: Token): void {

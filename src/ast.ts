@@ -86,6 +86,9 @@ export type Stmt =
   | { kind: "if_stmt"; condition: Expr; then: Stmt[]; else_: Stmt[] | null; line: number; col: number }
   | { kind: "match_stmt"; subject: Expr; arms: MatchArm[]; line: number; col: number }
   | { kind: "for_stmt"; variable: string; iterable: Expr; body: Stmt[]; line: number; col: number }
+  | { kind: "while_stmt"; condition: Expr; body: Stmt[]; line: number; col: number }
+  | { kind: "break_stmt"; line: number; col: number }
+  | { kind: "continue_stmt"; line: number; col: number }
   | { kind: "spawn_stmt"; body: Stmt[]; line: number; col: number }
   | { kind: "return_stmt"; value: Expr | null; line: number; col: number }
   | { kind: "expr_stmt"; expr: Expr; line: number; col: number };
