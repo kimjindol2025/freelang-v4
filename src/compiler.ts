@@ -221,6 +221,9 @@ export class Compiler {
       case "if_stmt": return this.compileIfStmt(stmt);
       case "match_stmt": return this.compileMatchStmt(stmt);
       case "for_stmt": return this.compileForStmt(stmt);
+      case "for_of_stmt": return this.compileForOfStmt(stmt);
+      case "while_stmt": return this.compileWhileStmt(stmt);
+      case "struct_decl": return; // 타입 선언, 런타임 불필요
       case "spawn_stmt": return this.compileSpawnStmt(stmt);
       case "return_stmt": return this.compileReturnStmt(stmt);
       case "expr_stmt": return this.compileExprStmt(stmt);
@@ -398,6 +401,86 @@ export class Compiler {
     this.chunk.emit(Op.ADD_I32, stmt.line);
     this.chunk.emit(Op.STORE_LOCAL, stmt.line);
     this.chunk.emitI32(idxSlot, stmt.line);
+
+    // JUMP → loopStart
+    this.chunk.emit(Op.JUMP, stmt.line);
+    this.chunk.emitI32(loopStart, stmt.line);
+
+    // exit (패치)
+    this.chunk.patchI32(exitJump, this.chunk.currentOffset());
+  }
+
+  private compileForOfStmt(stmt: Stmt & { kind: "for_of_stmt" }): void {
+    // for_of_stmt는 for_stmt와 동일 (변수 선언 방식만 다름)
+    this.compileExpr(stmt.iterable);
+    const arrSlot = this.declareLocal("__arr__");
+    this.chunk.emit(Op.STORE_LOCAL, stmt.line);
+    this.chunk.emitI32(arrSlot, stmt.line);
+
+    this.chunk.emit(Op.PUSH_I32, stmt.line);
+    this.chunk.emitI32(0, stmt.line);
+    const idxSlot = this.declareLocal("__idx__");
+    this.chunk.emit(Op.STORE_LOCAL, stmt.line);
+    this.chunk.emitI32(idxSlot, stmt.line);
+
+    this.chunk.emit(Op.PUSH_VOID, stmt.line);
+    const itemSlot = this.declareLocal(stmt.variable);
+    this.chunk.emit(Op.STORE_LOCAL, stmt.line);
+    this.chunk.emitI32(itemSlot, stmt.line);
+
+    const loopStart = this.chunk.currentOffset();
+
+    this.chunk.emit(Op.LOAD_LOCAL, stmt.line);
+    this.chunk.emitI32(idxSlot, stmt.line);
+    this.chunk.emit(Op.LOAD_LOCAL, stmt.line);
+    this.chunk.emitI32(arrSlot, stmt.line);
+    this.chunk.emit(Op.CALL_BUILTIN, stmt.line);
+    this.chunk.emitI32(this.chunk.addConstant("length"), stmt.line);
+    this.chunk.emitByte(1, stmt.line);
+    this.chunk.emit(Op.LT, stmt.line);
+    this.chunk.emit(Op.JUMP_IF_FALSE, stmt.line);
+    const exitJump = this.chunk.currentOffset();
+    this.chunk.emitI32(0, stmt.line);
+
+    this.chunk.emit(Op.LOAD_LOCAL, stmt.line);
+    this.chunk.emitI32(arrSlot, stmt.line);
+    this.chunk.emit(Op.LOAD_LOCAL, stmt.line);
+    this.chunk.emitI32(idxSlot, stmt.line);
+    this.chunk.emit(Op.ARRAY_GET, stmt.line);
+    this.chunk.emit(Op.STORE_LOCAL, stmt.line);
+    this.chunk.emitI32(itemSlot, stmt.line);
+
+    this.beginScope();
+    for (const s of stmt.body) this.compileStmt(s);
+    this.endScope(stmt.line);
+
+    this.chunk.emit(Op.LOAD_LOCAL, stmt.line);
+    this.chunk.emitI32(idxSlot, stmt.line);
+    this.chunk.emit(Op.PUSH_I32, stmt.line);
+    this.chunk.emitI32(1, stmt.line);
+    this.chunk.emit(Op.ADD_I32, stmt.line);
+    this.chunk.emit(Op.STORE_LOCAL, stmt.line);
+    this.chunk.emitI32(idxSlot, stmt.line);
+
+    this.chunk.emit(Op.JUMP, stmt.line);
+    this.chunk.emitI32(loopStart, stmt.line);
+
+    this.chunk.patchI32(exitJump, this.chunk.currentOffset());
+  }
+
+  private compileWhileStmt(stmt: Stmt & { kind: "while_stmt" }): void {
+    const loopStart = this.chunk.currentOffset();
+
+    // 조건 계산
+    this.compileExpr(stmt.condition);
+    this.chunk.emit(Op.JUMP_IF_FALSE, stmt.line);
+    const exitJump = this.chunk.currentOffset();
+    this.chunk.emitI32(0, stmt.line); // 패치 예정
+
+    // body
+    this.beginScope();
+    for (const s of stmt.body) this.compileStmt(s);
+    this.endScope(stmt.line);
 
     // JUMP → loopStart
     this.chunk.emit(Op.JUMP, stmt.line);

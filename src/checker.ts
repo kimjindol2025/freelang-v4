@@ -88,16 +88,17 @@ function isCopyType(t: Type): boolean {
     case "f64":
     case "bool":
     case "string":  // string은 immutable이므로 Copy (SPEC_06 Q8)
+    case "array":   // array는 자동 복사본 전달 (SPEC_09: Copy-on-Pass)
       return true;
     case "option":
       return isCopyType(t.element);
     case "result":
       return isCopyType(t.ok) && isCopyType(t.err);
-    case "array":
-    case "channel":
     case "struct":
+      return true;  // struct도 자동 복사본 전달 (SPEC_09: Copy-on-Pass)
+    case "channel":
     case "fn":
-      return false; // Move 타입 (함수도 Move 타입)
+      return false; // Move 타입 (채널, 함수는 Move)
     default:
       return true;
   }
@@ -652,13 +653,17 @@ export class TypeChecker {
     const left = this.checkExpr(expr.left);
     const right = this.checkExpr(expr.right);
 
-    // 비교 연산자 → bool
+    // 비교 연산자 → bool (타입 강제 변환 지원)
     if (["==", "!=", "<", ">", "<=", ">="].includes(expr.op)) {
       if (!typesEqual(left, right) && left.kind !== "unknown" && right.kind !== "unknown") {
-        this.error(
-          `cannot compare ${typeToString(left)} and ${typeToString(right)}`,
-          expr.line, expr.col,
-        );
+        // numeric 타입은 강제 변환 허용
+        const coerced = this.coerceNumeric(left, right);
+        if (!coerced) {
+          this.error(
+            `cannot compare ${typeToString(left)} and ${typeToString(right)}`,
+            expr.line, expr.col,
+          );
+        }
       }
       return { kind: "bool" };
     }
@@ -679,19 +684,28 @@ export class TypeChecker {
       if (left.kind === "string" && right.kind === "string") return { kind: "string" };
     }
 
-    // 산술: i32, i64, f64
+    // 산술: i32, i64, f64 (타입 강제 변환 지원)
     if (["+", "-", "*", "/", "%"].includes(expr.op)) {
-      if (!typesEqual(left, right) && left.kind !== "unknown" && right.kind !== "unknown") {
-        this.error(
-          `type mismatch in '${expr.op}': ${typeToString(left)} and ${typeToString(right)}`,
-          expr.line, expr.col,
-        );
-      }
       const numericTypes = ["i32", "i64", "f64"];
-      if (!numericTypes.includes(left.kind) && left.kind !== "unknown") {
-        this.error(`'${expr.op}' requires numeric type, got ${typeToString(left)}`, expr.line, expr.col);
+
+      // 타입이 같거나 numeric 타입 강제 변환 가능
+      if (!typesEqual(left, right) && left.kind !== "unknown" && right.kind !== "unknown") {
+        const coerced = this.coerceNumeric(left, right);
+        if (!coerced) {
+          this.error(
+            `type mismatch in '${expr.op}': ${typeToString(left)} and ${typeToString(right)}`,
+            expr.line, expr.col,
+          );
+          return { kind: "unknown" };
+        }
+        return coerced;  // 강제 변환된 타입 반환
       }
-      return left.kind !== "unknown" ? left : right;
+
+      // 한쪽이 unknown이면 다른 쪽 반환
+      if (left.kind === "unknown") return right;
+      if (right.kind === "unknown") return left;
+
+      return left;
     }
 
     return { kind: "unknown" };
@@ -1083,46 +1097,112 @@ export class TypeChecker {
   }
 
   // ============================================================
+  // 타입 강제 변환 (Type Coercion)
+  // ============================================================
+
+  private coerceNumeric(left: Type, right: Type): Type | null {
+    // 양쪽이 numeric 타입이면 강제 변환 가능
+    const numericTypes = ["i32", "i64", "f64"];
+    if (!numericTypes.includes(left.kind) || !numericTypes.includes(right.kind)) {
+      return null;
+    }
+
+    // 타입 승격 규칙: f64 > i64 > i32
+    const hierarchy = { i32: 0, i64: 1, f64: 2 };
+    const leftRank = hierarchy[left.kind as keyof typeof hierarchy];
+    const rightRank = hierarchy[right.kind as keyof typeof hierarchy];
+
+    if (leftRank >= rightRank) return left;
+    else return right;
+  }
+
+  // ============================================================
   // 내장 함수 (SPEC_10)
   // ============================================================
 
   private isBuiltin(name: string): boolean {
     return [
-      "println", "read_line", "read_file", "write_file",
+      "println", "print", "read_line", "read_file", "write_file",
       "i32", "i64", "f64", "str",
       "push", "pop", "slice", "clone", "length",
       "char_at", "contains", "split", "trim", "to_upper", "to_lower",
       "abs", "min", "max", "pow", "sqrt",
       "range", "channel", "panic", "typeof", "assert",
+      // Phase 7: 20 Core Libraries
+      "md5", "sha256", "sha512", "base64_encode", "base64_decode", "hmac",
+      "json_parse", "json_stringify", "json_validate", "json_pretty",
+      "starts_with", "ends_with", "replace",
+      "reverse", "sort", "unique",
+      "gcd", "lcm",
+      "uuid", "timestamp",
+      "send", "recv",
     ].includes(name);
   }
 
   private getBuiltinReturnType(name: string, args: Expr[]): Type | null {
     switch (name) {
-      case "println": return { kind: "void" };
+      // Basic I/O
+      case "println": case "print": return { kind: "void" };
       case "read_line": return { kind: "string" };
       case "read_file": return { kind: "result", ok: { kind: "string" }, err: { kind: "string" } };
       case "write_file": return { kind: "result", ok: { kind: "void" }, err: { kind: "string" } };
+
+      // Type conversions
       case "i32": return { kind: "result", ok: { kind: "i32" }, err: { kind: "string" } };
       case "i64": return { kind: "result", ok: { kind: "i64" }, err: { kind: "string" } };
       case "f64": return { kind: "result", ok: { kind: "f64" }, err: { kind: "string" } };
       case "str": return { kind: "string" };
+
+      // Array operations
       case "length": return { kind: "i32" };
       case "push": return { kind: "void" };
-      case "pop": return { kind: "unknown" }; // 원소 타입 모름
+      case "pop": return { kind: "unknown" };
       case "clone": return { kind: "unknown" };
+      case "slice": return { kind: "unknown" };
+      case "reverse": case "sort": case "unique":
+        return { kind: "unknown" }; // 배열 타입 복제
+
+      // String operations
+      case "char_at": case "trim": case "to_upper": case "to_lower":
+        return { kind: "string" };
+      case "contains": case "starts_with": case "ends_with":
+        return { kind: "bool" };
+      case "split": return { kind: "array", element: { kind: "string" } };
+      case "replace": return { kind: "string" };
+
+      // Range & channel
       case "range": return { kind: "array", element: { kind: "i32" } };
-      case "channel": return { kind: "unknown" }; // 채널 타입은 문맥 의존
+      case "channel": return { kind: "unknown" };
+      case "send": case "recv": return { kind: "unknown" };
+
+      // Control
       case "panic": return { kind: "void" };
       case "typeof": return { kind: "string" };
       case "assert": return { kind: "void" };
+
+      // Math
       case "abs": case "min": case "max": case "pow": case "sqrt":
-        return null; // 인자 타입에 의존 — 기본 처리
-      case "contains": return { kind: "bool" };
-      case "split": return { kind: "array", element: { kind: "string" } };
-      case "trim": case "to_upper": case "to_lower": case "char_at":
+        return null; // 인자 타입에 의존
+      case "gcd": case "lcm": return { kind: "i32" };
+
+      // Cryptography & Encoding (Phase 7)
+      case "md5": case "sha256": case "sha512": case "hmac":
         return { kind: "string" };
-      case "slice": return { kind: "unknown" };
+      case "base64_encode": return { kind: "string" };
+      case "base64_decode":
+        return { kind: "result", ok: { kind: "string" }, err: { kind: "string" } };
+
+      // JSON (Phase 7)
+      case "json_parse":
+        return { kind: "result", ok: { kind: "unknown" }, err: { kind: "string" } };
+      case "json_stringify": return { kind: "string" };
+      case "json_validate": return { kind: "bool" };
+      case "json_pretty": return { kind: "string" };
+
+      // Utils (Phase 7)
+      case "uuid": return { kind: "string" };
+      case "timestamp": return { kind: "f64" };
+
       default: return null;
     }
   }

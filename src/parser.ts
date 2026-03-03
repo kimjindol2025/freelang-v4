@@ -338,20 +338,27 @@ export class Parser {
       const tok = this.peek();
 
       // 구조체 리터럴: ident { field: value, ... }
+      // Lookahead: { 다음이 ident: 패턴인지 확인 (while/if 블록과 구분)
       if (tok.type === TokenType.LBRACE && left.kind === "ident") {
-        this.advance(); // {
-        const fields: { name: string; value: Expr }[] = [];
-        if (!this.check(TokenType.RBRACE)) {
-          do {
-            const name = this.expectIdent("field name");
-            this.expect(TokenType.COLON, "expected ':' after field name");
-            const value = this.parseExpr(0);
-            fields.push({ name, value });
-          } while (this.match(TokenType.COMMA));
+        // Lookahead: 다음 토큰이 ident이고, 그 다음이 :인지 확인
+        if (this.pos + 1 < this.tokens.length &&
+            this.tokens[this.pos + 1].type === TokenType.IDENT &&
+            this.pos + 2 < this.tokens.length &&
+            this.tokens[this.pos + 2].type === TokenType.COLON) {
+          this.advance(); // {
+          const fields: { name: string; value: Expr }[] = [];
+          if (!this.check(TokenType.RBRACE)) {
+            do {
+              const name = this.expectIdent("field name");
+              this.expect(TokenType.COLON, "expected ':' after field name");
+              const value = this.parseExpr(0);
+              fields.push({ name, value });
+            } while (this.match(TokenType.COMMA));
+          }
+          this.expect(TokenType.RBRACE, "expected '}'");
+          left = { kind: "struct_lit", structName: left.name, fields, line: left.line, col: left.col };
+          continue;
         }
-        this.expect(TokenType.RBRACE, "expected '}'");
-        left = { kind: "struct_lit", structName: left.name, fields, line: left.line, col: left.col };
-        continue;
       }
 
       const bp = infixBP(tok.type);
