@@ -16,7 +16,9 @@ export type TypeAnnotation =
   | { kind: "option"; element: TypeAnnotation }
   | { kind: "result"; ok: TypeAnnotation; err: TypeAnnotation }
   | { kind: "struct_ref"; name: string }
-  | { kind: "fn"; params: TypeAnnotation[]; returnType: TypeAnnotation };
+  | { kind: "fn"; params: TypeAnnotation[]; returnType: TypeAnnotation }
+  | { kind: "type_param"; name: string }                                  // Generic 타입 파라미터 (T, K, V)
+  | { kind: "generic_ref"; name: string; typeArgs: TypeAnnotation[] };   // 제네릭 타입 참조 (List<T>, Map<K,V>)
 
 // ============================================================
 // 패턴 (Match Patterns) — SPEC_05 Q8: 7종
@@ -81,8 +83,8 @@ export type StructField = {
 
 export type Stmt =
   | { kind: "var_decl"; name: string; mutable: boolean; type: TypeAnnotation | null; init: Expr; line: number; col: number }
-  | { kind: "fn_decl"; name: string; params: Param[]; returnType: TypeAnnotation; body: Stmt[]; line: number; col: number }
-  | { kind: "struct_decl"; name: string; fields: StructField[]; line: number; col: number }
+  | { kind: "fn_decl"; name: string; typeParams: string[]; params: Param[]; returnType: TypeAnnotation; body: Stmt[]; line: number; col: number }
+  | { kind: "struct_decl"; name: string; typeParams: string[]; fields: StructField[]; line: number; col: number }
   | { kind: "if_stmt"; condition: Expr; then: Stmt[]; else_: Stmt[] | null; line: number; col: number }
   | { kind: "match_stmt"; subject: Expr; arms: MatchArm[]; line: number; col: number }
   | { kind: "for_stmt"; variable: string; iterable: Expr; body: Stmt[]; line: number; col: number }

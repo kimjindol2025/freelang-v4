@@ -140,6 +140,16 @@ export class Parser {
   private parseFnDecl(): Stmt {
     const kw = this.advance(); // fn
     const name = this.expectIdent("function name");
+
+    // Generic 타입 파라미터: fn foo<T, K>(...) [STEP B-1]
+    const typeParams: string[] = [];
+    if (this.match(TokenType.LT)) {
+      do {
+        typeParams.push(this.expectIdent("type parameter"));
+      } while (this.match(TokenType.COMMA));
+      this.expect(TokenType.GT, "expected '>' after type parameters");
+    }
+
     this.expect(TokenType.LPAREN, "expected '(' after function name");
 
     const params: Param[] = [];
@@ -160,13 +170,23 @@ export class Parser {
     this.expect(TokenType.LBRACE, "expected '{' for function body");
     const body = this.parseBlock();
 
-    return { kind: "fn_decl", name, params, returnType, body, line: kw.line, col: kw.col };
+    return { kind: "fn_decl", name, typeParams, params, returnType, body, line: kw.line, col: kw.col };
   }
 
   // struct 선언
   private parseStructDecl(): Stmt {
     const kw = this.advance(); // struct
     const name = this.expectIdent("struct name");
+
+    // Generic 타입 파라미터: struct Box<T> [STEP B-2]
+    const typeParams: string[] = [];
+    if (this.match(TokenType.LT)) {
+      do {
+        typeParams.push(this.expectIdent("type parameter"));
+      } while (this.match(TokenType.COMMA));
+      this.expect(TokenType.GT, "expected '>' after type parameters");
+    }
+
     this.expect(TokenType.LBRACE, "expected '{' after struct name");
 
     const fields: StructField[] = [];
@@ -181,7 +201,7 @@ export class Parser {
 
     this.expect(TokenType.RBRACE, "expected '}' to close struct");
 
-    return { kind: "struct_decl", name, fields, line: kw.line, col: kw.col };
+    return { kind: "struct_decl", name, typeParams, fields, line: kw.line, col: kw.col };
   }
 
   // if 문 (문 위치)
@@ -743,30 +763,31 @@ export class Parser {
       return { kind: "channel", element };
     }
 
-    // Option<T>
-    if (tok.type === TokenType.IDENT && tok.lexeme === "Option") {
-      this.advance();
-      this.expect(TokenType.LT, "expected '<' after Option");
-      const element = this.parseType();
-      this.expect(TokenType.GT, "expected '>' for Option type");
-      return { kind: "option", element };
-    }
-
-    // Result<T, E>
-    if (tok.type === TokenType.IDENT && tok.lexeme === "Result") {
-      this.advance();
-      this.expect(TokenType.LT, "expected '<' after Result");
-      const ok = this.parseType();
-      this.expect(TokenType.COMMA, "expected ',' in Result<T, E>");
-      const err = this.parseType();
-      this.expect(TokenType.GT, "expected '>' for Result type");
-      return { kind: "result", ok, err };
-    }
-
-    // Struct type reference (custom type name)
+    // IDENT: 타입 파라미터(T, K, V) 또는 Generic/Struct 타입 [STEP B-3]
     if (tok.type === TokenType.IDENT) {
       const name = tok.lexeme;
       this.advance();
+
+      // 단일 대문자 → type_param (T, K, V)
+      if (name.length === 1 && name >= 'A' && name <= 'Z') {
+        return { kind: "type_param", name };
+      }
+
+      // Option<T>, Result<T,E>, Generic 타입, 커스텀 struct
+      if (this.check(TokenType.LT)) {
+        this.advance(); // LT 소비
+        const typeArgs: TypeAnnotation[] = [];
+        do {
+          typeArgs.push(this.parseType());
+        } while (this.match(TokenType.COMMA));
+        this.expect(TokenType.GT, "expected '>' after type arguments");
+
+        // 내장 제네릭 타입 매핑
+        if (name === "Option") return { kind: "option", element: typeArgs[0] };
+        if (name === "Result") return { kind: "result", ok: typeArgs[0], err: typeArgs[1] };
+        return { kind: "generic_ref", name, typeArgs };
+      }
+
       return { kind: "struct_ref", name };
     }
 

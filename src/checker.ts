@@ -20,6 +20,8 @@ export type Type =
   | { kind: "result"; ok: Type; err: Type }
   | { kind: "struct"; fields: Map<string, Type> }
   | { kind: "fn"; params: Type[]; returnType: Type }
+  | { kind: "type_param"; name: string }                            // 제네릭 타입 파라미터 (T, K, V)
+  | { kind: "generic_ref"; name: string; typeArgs: Type[] }         // 제네릭 타입 참조 (List<T>)
   | { kind: "unknown" };
 
 // ============================================================
@@ -99,6 +101,10 @@ function isCopyType(t: Type): boolean {
     case "channel":
     case "fn":
       return false; // Move 타입 (채널, 함수는 Move)
+    case "type_param":
+      return true;  // Generic 타입 파라미터는 Copy로 취급 (Type Erasure)
+    case "generic_ref":
+      return true;  // Generic 타입도 기본적으로 Copy
     default:
       return true;
   }
@@ -109,6 +115,9 @@ function isCopyType(t: Type): boolean {
 // ============================================================
 
 function typesEqual(a: Type, b: Type): boolean {
+  // type_param은 항상 compatible (Type Erasure 전략)
+  if (a.kind === "type_param" || b.kind === "type_param") return true;
+
   if (a.kind !== b.kind) return false;
 
   switch (a.kind) {
@@ -139,6 +148,15 @@ function typesEqual(a: Type, b: Type): boolean {
       }
       return typesEqual(a.returnType, bFn.returnType);
     }
+    case "generic_ref": {
+      const bGen = b as { kind: "generic_ref"; name: string; typeArgs: Type[] };
+      if (a.name !== bGen.name) return false;
+      if (a.typeArgs.length !== bGen.typeArgs.length) return false;
+      for (let i = 0; i < a.typeArgs.length; i++) {
+        if (!typesEqual(a.typeArgs[i], bGen.typeArgs[i])) return false;
+      }
+      return true;
+    }
     default:
       return false;
   }
@@ -160,11 +178,21 @@ function typeToString(t: Type): string {
       const paramStr = t.params.map(typeToString).join(", ");
       return `fn(${paramStr}) -> ${typeToString(t.returnType)}`;
     }
+    case "type_param":
+      return t.name;
+    case "generic_ref": {
+      const typeArgStr = t.typeArgs.map(typeToString).join(", ");
+      return `${t.name}<${typeArgStr}>`;
+    }
     case "unknown": return "unknown";
   }
 }
 
-function annotationToType(a: TypeAnnotation, structDefs: Map<string, Type> = new Map()): Type {
+function annotationToType(
+  a: TypeAnnotation,
+  structDefs: Map<string, Type> = new Map(),
+  typeEnv: Map<string, Type> = new Map(),
+): Type {
   switch (a.kind) {
     case "i32": return { kind: "i32" };
     case "i64": return { kind: "i64" };
@@ -172,18 +200,26 @@ function annotationToType(a: TypeAnnotation, structDefs: Map<string, Type> = new
     case "bool": return { kind: "bool" };
     case "string": return { kind: "string" };
     case "void": return { kind: "void" };
-    case "array": return { kind: "array", element: annotationToType(a.element, structDefs) };
-    case "channel": return { kind: "channel", element: annotationToType(a.element, structDefs) };
-    case "option": return { kind: "option", element: annotationToType(a.element, structDefs) };
-    case "result": return { kind: "result", ok: annotationToType(a.ok, structDefs), err: annotationToType(a.err, structDefs) };
+    case "array": return { kind: "array", element: annotationToType(a.element, structDefs, typeEnv) };
+    case "channel": return { kind: "channel", element: annotationToType(a.element, structDefs, typeEnv) };
+    case "option": return { kind: "option", element: annotationToType(a.element, structDefs, typeEnv) };
+    case "result": return { kind: "result", ok: annotationToType(a.ok, structDefs, typeEnv), err: annotationToType(a.err, structDefs, typeEnv) };
     case "struct_ref": {
       const structType = structDefs.get(a.name);
       return structType || { kind: "unknown" };
     }
     case "fn": {
-      const params = a.params.map(p => annotationToType(p, structDefs));
-      const returnType = annotationToType(a.returnType, structDefs);
+      const params = a.params.map(p => annotationToType(p, structDefs, typeEnv));
+      const returnType = annotationToType(a.returnType, structDefs, typeEnv);
       return { kind: "fn", params, returnType };
+    }
+    case "type_param": {
+      // typeEnv에서 치환된 타입 찾기, 없으면 type_param 유지
+      return typeEnv.get(a.name) ?? { kind: "type_param", name: a.name };
+    }
+    case "generic_ref": {
+      const typeArgs = a.typeArgs.map(arg => annotationToType(arg, structDefs, typeEnv));
+      return { kind: "generic_ref", name: a.name, typeArgs };
     }
   }
 }
