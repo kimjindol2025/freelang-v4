@@ -109,6 +109,9 @@ const KEYWORDS: Map<string, TokenType> = new Map([
   ["spawn", TokenType.SPAWN],
   ["true", TokenType.TRUE],
   ["false", TokenType.FALSE],
+  // 논리 연산자 키워드 (2) — && || 대신 사용 가능
+  ["and", TokenType.AND],
+  ["or", TokenType.OR],
   // 타입 이름 (7)
   ["i32", TokenType.TYPE_I32],
   ["i64", TokenType.TYPE_I64],
