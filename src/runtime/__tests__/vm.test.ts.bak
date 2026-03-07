@@ -1,0 +1,288 @@
+/**
+ * VM 테스트 모음
+ */
+
+import { VirtualMachine } from '../vm';
+import { BytecodeBuilder } from '../bytecode';
+import { Value } from '../value';
+
+describe('VirtualMachine', () => {
+  let vm: VirtualMachine;
+
+  beforeEach(() => {
+    vm = new VirtualMachine();
+  });
+
+  describe('스택 연산', () => {
+    test('PUSH와 POP', () => {
+      const builder = new BytecodeBuilder();
+      builder.push(Value.int(42));
+      const result = vm.execute(builder.build());
+      expect(result).toEqual({ type: 'int', value: 42 });
+    });
+
+    test('DUP (복제)', () => {
+      const builder = new BytecodeBuilder();
+      builder.push(Value.int(5)).dup().add();
+      const result = vm.execute(builder.build());
+      expect(result).toEqual({ type: 'int', value: 10 });
+    });
+
+    test('빈 스택에서 POP 에러', () => {
+      const builder = new BytecodeBuilder();
+      builder.pop();
+      expect(() => vm.execute(builder.build())).toThrow('Stack underflow');
+    });
+  });
+
+  describe('산술 연산', () => {
+    test('덧셈', () => {
+      const builder = new BytecodeBuilder();
+      builder.push(Value.int(10)).push(Value.int(20)).add();
+      const result = vm.execute(builder.build());
+      expect(result).toEqual({ type: 'int', value: 30 });
+    });
+
+    test('뺄셈', () => {
+      const builder = new BytecodeBuilder();
+      builder.push(Value.int(30)).push(Value.int(10)).sub();
+      const result = vm.execute(builder.build());
+      expect(result).toEqual({ type: 'int', value: 20 });
+    });
+
+    test('곱셈', () => {
+      const builder = new BytecodeBuilder();
+      builder.push(Value.int(6)).push(Value.int(7)).mul();
+      const result = vm.execute(builder.build());
+      expect(result).toEqual({ type: 'int', value: 42 });
+    });
+
+    test('나눗셈', () => {
+      const builder = new BytecodeBuilder();
+      builder.push(Value.int(20)).push(Value.int(4)).div();
+      const result = vm.execute(builder.build());
+      expect(result).toEqual({ type: 'int', value: 5 });
+    });
+
+    test('나머지', () => {
+      const builder = new BytecodeBuilder();
+      builder.push(Value.int(17)).push(Value.int(5)).mod();
+      const result = vm.execute(builder.build());
+      expect(result).toEqual({ type: 'int', value: 2 });
+    });
+
+    test('0으로 나누기 에러', () => {
+      const builder = new BytecodeBuilder();
+      builder.push(Value.int(10)).push(Value.int(0)).div();
+      expect(() => vm.execute(builder.build())).toThrow('Division by zero');
+    });
+  });
+
+  describe('비교 연산', () => {
+    test('EQ (같음)', () => {
+      const builder = new BytecodeBuilder();
+      builder.push(Value.int(5)).push(Value.int(5)).eq();
+      const result = vm.execute(builder.build());
+      expect(result).toEqual({ type: 'bool', value: true });
+    });
+
+    test('EQ (다름)', () => {
+      const builder = new BytecodeBuilder();
+      builder.push(Value.int(5)).push(Value.int(3)).eq();
+      const result = vm.execute(builder.build());
+      expect(result).toEqual({ type: 'bool', value: false });
+    });
+
+    test('NE (같지 않음)', () => {
+      const builder = new BytecodeBuilder();
+      builder.push(Value.int(5)).push(Value.int(3)).ne();
+      const result = vm.execute(builder.build());
+      expect(result).toEqual({ type: 'bool', value: true });
+    });
+
+    test('LT (작음)', () => {
+      const builder = new BytecodeBuilder();
+      builder.push(Value.int(3)).push(Value.int(5)).lt();
+      const result = vm.execute(builder.build());
+      expect(result).toEqual({ type: 'bool', value: true });
+    });
+
+    test('LTE (작거나 같음)', () => {
+      const builder = new BytecodeBuilder();
+      builder.push(Value.int(5)).push(Value.int(5)).lte();
+      const result = vm.execute(builder.build());
+      expect(result).toEqual({ type: 'bool', value: true });
+    });
+
+    test('GT (큼)', () => {
+      const builder = new BytecodeBuilder();
+      builder.push(Value.int(5)).push(Value.int(3)).gt();
+      const result = vm.execute(builder.build());
+      expect(result).toEqual({ type: 'bool', value: true });
+    });
+
+    test('GTE (크거나 같음)', () => {
+      const builder = new BytecodeBuilder();
+      builder.push(Value.int(5)).push(Value.int(5)).gte();
+      const result = vm.execute(builder.build());
+      expect(result).toEqual({ type: 'bool', value: true });
+    });
+  });
+
+  describe('논리 연산', () => {
+    test('AND (둘 다 참)', () => {
+      const builder = new BytecodeBuilder();
+      builder
+        .push(Value.bool(true))
+        .push(Value.bool(true))
+        .and();
+      const result = vm.execute(builder.build());
+      expect(result).toEqual({ type: 'bool', value: true });
+    });
+
+    test('AND (한쪽이 거짓)', () => {
+      const builder = new BytecodeBuilder();
+      builder
+        .push(Value.bool(true))
+        .push(Value.bool(false))
+        .and();
+      const result = vm.execute(builder.build());
+      expect(result).toEqual({ type: 'bool', value: false });
+    });
+
+    test('OR (한쪽이 참)', () => {
+      const builder = new BytecodeBuilder();
+      builder
+        .push(Value.bool(false))
+        .push(Value.bool(true))
+        .or();
+      const result = vm.execute(builder.build());
+      expect(result).toEqual({ type: 'bool', value: true });
+    });
+
+    test('NOT (반전)', () => {
+      const builder = new BytecodeBuilder();
+      builder.push(Value.bool(true)).not();
+      const result = vm.execute(builder.build());
+      expect(result).toEqual({ type: 'bool', value: false });
+    });
+  });
+
+  describe('변수 접근', () => {
+    test('LOAD_LOCAL과 STORE_LOCAL', () => {
+      const builder = new BytecodeBuilder();
+      builder
+        .push(Value.int(42))
+        .storeLocal(0)
+        .loadLocal(0);
+      const result = vm.execute(builder.build());
+      expect(result).toEqual({ type: 'int', value: 42 });
+    });
+
+    test('LOAD_GLOBAL과 STORE_GLOBAL', () => {
+      const builder = new BytecodeBuilder();
+      builder
+        .push(Value.string('hello'))
+        .storeGlobal('greeting')
+        .loadGlobal('greeting');
+      const result = vm.execute(builder.build());
+      expect(result).toEqual({ type: 'string', value: 'hello' });
+    });
+
+    test('초기화되지 않은 변수는 null', () => {
+      const builder = new BytecodeBuilder();
+      builder.loadGlobal('undefined_var');
+      const result = vm.execute(builder.build());
+      expect(result).toEqual({ type: 'null' });
+    });
+  });
+
+  describe('복합 연산', () => {
+    test('(10 + 20) * 2', () => {
+      const builder = new BytecodeBuilder();
+      builder
+        .push(Value.int(10))
+        .push(Value.int(20))
+        .add()
+        .push(Value.int(2))
+        .mul();
+      const result = vm.execute(builder.build());
+      expect(result).toEqual({ type: 'int', value: 60 });
+    });
+
+    test('(100 - 30) / 10', () => {
+      const builder = new BytecodeBuilder();
+      builder
+        .push(Value.int(100))
+        .push(Value.int(30))
+        .sub()
+        .push(Value.int(10))
+        .div();
+      const result = vm.execute(builder.build());
+      expect(result).toEqual({ type: 'int', value: 7 });
+    });
+
+    test('중첩된 조건 (3 < 5 && true)', () => {
+      const builder = new BytecodeBuilder();
+      builder
+        .push(Value.int(3))
+        .push(Value.int(5))
+        .lt()
+        .push(Value.bool(true))
+        .and();
+      const result = vm.execute(builder.build());
+      expect(result).toEqual({ type: 'bool', value: true });
+    });
+  });
+
+  describe('HALT', () => {
+    test('HALT에서 실행 중단', () => {
+      const builder = new BytecodeBuilder();
+      builder
+        .push(Value.int(42))
+        .halt()
+        .push(Value.int(100)); // 실행되지 않음
+      const result = vm.execute(builder.build());
+      expect(result).toEqual({ type: 'int', value: 42 });
+    });
+  });
+
+  describe('메서드 체이닝', () => {
+    test('BytecodeBuilder 체이닝', () => {
+      const builder = new BytecodeBuilder();
+      builder
+        .push(Value.int(2))
+        .push(Value.int(3))
+        .mul()
+        .push(Value.int(4))
+        .add()
+        .push(Value.int(2))
+        .div();
+      const result = vm.execute(builder.build());
+      expect(result).toEqual({ type: 'int', value: 5 }); // (2*3+4)/2 = 5
+    });
+  });
+});
+
+describe('BytecodeBuilder', () => {
+  test('setLocation으로 라인/열 설정', () => {
+    const builder = new BytecodeBuilder();
+    builder.setLocation(42, 10);
+    builder.push(Value.int(1));
+    const instructions = builder.build();
+    expect(instructions[0].line).toBe(42);
+    expect(instructions[0].column).toBe(10);
+  });
+
+  test('명령어 개수 확인', () => {
+    const builder = new BytecodeBuilder();
+    builder
+      .push(Value.int(1))
+      .push(Value.int(2))
+      .add()
+      .push(Value.int(3))
+      .mul();
+    const instructions = builder.build();
+    expect(instructions.length).toBe(5);
+  });
+});
