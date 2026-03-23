@@ -1025,6 +1025,14 @@ export class TypeChecker {
   }
 
   private checkStructLit(expr: Expr & { kind: "struct_lit" }): Type {
+    // 익명 구조체 리터럴: 필드 타입만 확인
+    if (!expr.structName) {
+      for (const field of expr.fields) {
+        this.checkExpr(field.value);
+      }
+      return { kind: "unknown" };
+    }
+
     // struct 정의 확인
     const structDef = this.structs.get(expr.structName);
     if (!structDef || structDef.kind !== "struct") {

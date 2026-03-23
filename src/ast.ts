@@ -63,7 +63,7 @@ export type Expr =
   | { kind: "if_expr"; condition: Expr; then: Expr[]; else_: Expr[]; line: number; col: number }
   | { kind: "match_expr"; subject: Expr; arms: MatchArm[]; line: number; col: number }
   | { kind: "array_lit"; elements: Expr[]; line: number; col: number }
-  | { kind: "struct_lit"; structName: string; fields: { name: string; value: Expr }[]; line: number; col: number }
+  | { kind: "struct_lit"; structName: string | null; fields: { name: string; value: Expr }[]; line: number; col: number }
   | { kind: "fn_lit"; params: FnParam[]; returnType?: TypeAnnotation; body: Expr; line: number; col: number }
   | { kind: "block_expr"; stmts: Stmt[]; expr: Expr | null; line: number; col: number };
 

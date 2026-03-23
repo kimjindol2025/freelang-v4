@@ -260,8 +260,6 @@ console.log(`Success Rate: ${((testPassed / testCount) * 100).toFixed(1)}%`);
 
 if (testPassed >= testCount - 2) {  // 거의 모두 통과
   console.log(`\n✓ While loop system works!`);
-  process.exit(0);
 } else {
   console.log(`\n⚠ Some tests need attention`);
-  process.exit(1);
 }

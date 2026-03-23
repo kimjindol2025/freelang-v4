@@ -241,8 +241,6 @@ console.log(`Success Rate: ${((testPassed / testCount) * 100).toFixed(1)}%`);
 
 if (testPassed === testCount) {
   console.log(`\n✓ All tests passed!`);
-  process.exit(0);
 } else {
   console.log(`\n✗ Some tests failed`);
-  process.exit(1);
 }

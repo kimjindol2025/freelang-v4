@@ -164,7 +164,7 @@ export class Parser {
     this.expect(TokenType.RPAREN, "expected ')' after parameters");
 
     // 반환 타입 (필수 — SPEC_06: 함수 시그니처 명시)
-    this.expect(TokenType.RARROW, "expected '->' for return type");
+    this.expect(TokenType.COLON, "expected ':' for return type");
     const returnType = this.parseType();
 
     this.expect(TokenType.LBRACE, "expected '{' for function body");
@@ -450,6 +450,30 @@ export class Parser {
       return this.parseArrayLit();
     }
 
+    // 익명 구조체 리터럴: { field: value, ... }
+    // Lookahead: { 다음이 ident: 패턴인지 확인 (struct literal vs block)
+    if (tok.type === TokenType.LBRACE) {
+      // Lookahead: 다음 토큰이 ident이고, 그 다음이 :인지 확인
+      if (this.pos + 1 < this.tokens.length &&
+          this.tokens[this.pos + 1].type === TokenType.IDENT &&
+          this.pos + 2 < this.tokens.length &&
+          this.tokens[this.pos + 2].type === TokenType.COLON) {
+        this.advance(); // {
+        const fields: { name: string; value: Expr }[] = [];
+        if (!this.check(TokenType.RBRACE)) {
+          do {
+            const name = this.expectIdent("field name");
+            this.expect(TokenType.COLON, "expected ':' after field name");
+            const value = this.parseExpr(0);
+            fields.push({ name, value });
+          } while (this.match(TokenType.COMMA));
+        }
+        this.expect(TokenType.RBRACE, "expected '}'");
+        // 익명 구조체 리터럴: structName을 null로 설정
+        return { kind: "struct_lit", structName: null, fields, line: tok.line, col: tok.col };
+      }
+    }
+
     // if 식 (식 위치)
     if (tok.type === TokenType.IF) {
       return this.parseIfExpr();
@@ -729,7 +753,7 @@ export class Parser {
       }
 
       this.expect(TokenType.RPAREN, "expected ')' after fn params");
-      this.expect(TokenType.RARROW, "expected '->' in fn type");
+      this.expect(TokenType.COLON, "expected ':' in fn type");
       const returnType = this.parseType();
 
       return { kind: "fn", params, returnType };

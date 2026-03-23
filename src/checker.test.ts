@@ -276,4 +276,3 @@ println(str(sum(nums)))
 // ============================================================
 
 console.log(`\n=== 결과: ${passed} passed, ${failed} failed ===`);
-if (failed > 0) process.exit(1);

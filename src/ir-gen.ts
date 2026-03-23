@@ -396,7 +396,7 @@ export class IRGen {
         this.emit({
           kind: "struct_new",
           dest,
-          sname: expr.structName,
+          sname: expr.structName || "__anon_struct__",
           fields,
         });
         return { kind: "local", name: dest };
